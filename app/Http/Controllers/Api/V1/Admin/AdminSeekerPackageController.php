@@ -67,10 +67,6 @@ class AdminSeekerPackageController extends Controller
             'sort_order' => ['sometimes', 'integer', 'min:0', 'max:100000'],
         ]);
 
-        if (! empty($validated['list_price_inr']) && $validated['list_price_inr'] < $validated['price_inr']) {
-            // allow list > price for offers; if list < price, swap semantics confusion — still allow
-        }
-
         $row = SeekerPackage::query()->create([
             'key' => $validated['key'],
             'title' => $validated['title'],

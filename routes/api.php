@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminJobPostController;
 use App\Http\Controllers\Api\V1\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Api\V1\Admin\AdminBannerAdController;
 use App\Http\Controllers\Api\V1\Admin\AdminPurchaseController;
+use App\Http\Controllers\Api\V1\Admin\AdminSeekerPackageController;
 use App\Http\Controllers\Api\V1\Admin\AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -90,6 +91,10 @@ Route::prefix('v1')->group(function () {
             Route::get('users/{userId}', [AdminUserController::class, 'show'])->whereNumber('userId');
             Route::patch('users/{userId}/status', [AdminUserController::class, 'updateStatus'])->whereNumber('userId');
             Route::get('purchases', [AdminPurchaseController::class, 'index']);
+            Route::get('seeker-packages', [AdminSeekerPackageController::class, 'index']);
+            Route::post('seeker-packages', [AdminSeekerPackageController::class, 'store']);
+            Route::patch('seeker-packages/{packageId}', [AdminSeekerPackageController::class, 'update'])->whereNumber('packageId');
+            Route::delete('seeker-packages/{packageId}', [AdminSeekerPackageController::class, 'destroy'])->whereNumber('packageId');
             Route::get('analytics/overview', [AdminAnalyticsController::class, 'overview']);
             Route::get('analytics/job-seekers', [AdminAnalyticsController::class, 'seekerUsage']);
             Route::get('settings/moderation', [AdminSettingController::class, 'showModeration']);
