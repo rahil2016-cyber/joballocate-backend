@@ -43,6 +43,25 @@ class AuthController extends Controller
             ]);
         }
 
+        if ($validated['intent'] === 'login') {
+            $existing = $this->findUserByIdentifier($parts);
+            if (! $existing) {
+                return $this->fail('No account found for this email or phone. Please create an account first.', null, 404);
+            }
+            if ($existing->role !== $validated['role']) {
+                return $this->fail('This account uses a different login type. Try Job Seeker or Employer login accordingly.', null, 403);
+            }
+            if (! $existing->is_active) {
+                return $this->fail('Account is disabled.', null, 403);
+            }
+        }
+
+        if ($validated['intent'] === 'register') {
+            if ($this->findUserByIdentifier($parts)) {
+                return $this->fail('An account already exists for this email or phone. Please log in instead.', null, 409);
+            }
+        }
+
         $code = $this->otpService->send($validated['identifier']);
 
         $payload = [
