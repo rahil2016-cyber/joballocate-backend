@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SeekerPackage extends Model
 {
@@ -12,6 +13,7 @@ class SeekerPackage extends Model
         'description',
         'kind',
         'price_inr',
+        'list_price_inr',
         'duration_days',
         'applications_included',
         'resume_builds_included',
@@ -34,5 +36,10 @@ class SeekerPackage extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(SeekerPackagePurchase::class, 'seeker_package_id');
     }
 }
