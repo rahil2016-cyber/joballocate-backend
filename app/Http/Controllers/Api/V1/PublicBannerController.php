@@ -31,7 +31,7 @@ class PublicBannerController extends Controller
                 'content' => $b->content,
                 'target_url' => $b->target_url,
                 'background_color' => $b->background_color,
-                'image_url' => $b->image_path ? asset('storage/'.$b->image_path) : null,
+                'image_url' => $b->publicImageUrl(),
                 'starts_at' => $b->starts_at?->toIso8601String(),
                 'expires_at' => $b->expires_at?->toIso8601String(),
             ])

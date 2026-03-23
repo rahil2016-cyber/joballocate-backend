@@ -32,5 +32,23 @@ class BannerAd extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    /**
+     * Absolute URL for clients (app, admin). Served via /media/banner-ads/{file}
+     * so images work even when the web server blocks /storage or the symlink is missing.
+     */
+    public function publicImageUrl(): ?string
+    {
+        if ($this->image_path === null || $this->image_path === '') {
+            return null;
+        }
+
+        $name = basename((string) $this->image_path);
+        if ($name === '' || $name === '.' || $name === '..') {
+            return null;
+        }
+
+        return url('/media/banner-ads/'.$name);
+    }
 }
 
