@@ -9,21 +9,28 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('company_subscription_payments', function (Blueprint $table) {
-            $table->foreignId('company_subscription_package_id')
+            // Use explicit short names (MySQL 64-char identifier limit).
+            $table->unsignedBigInteger('company_subscription_package_id')
                 ->nullable()
-                ->after('company_id')
-                ->constrained('company_subscription_packages')
+                ->after('company_id');
+
+            $table->foreign('company_subscription_package_id', 'cs_pay_pkg_fk')
+                ->references('id')
+                ->on('company_subscription_packages')
                 ->nullOnDelete();
 
-            $table->index(['company_id', 'company_subscription_package_id', 'coupon_code_used']);
+            $table->index(
+                ['company_id', 'company_subscription_package_id', 'coupon_code_used'],
+                'cs_pay_company_pkg_coupon_idx'
+            );
         });
     }
 
     public function down(): void
     {
         Schema::table('company_subscription_payments', function (Blueprint $table) {
-            $table->dropIndex(['company_id', 'company_subscription_package_id', 'coupon_code_used']);
-            $table->dropForeign(['company_subscription_package_id']);
+            $table->dropIndex('cs_pay_company_pkg_coupon_idx');
+            $table->dropForeign('cs_pay_pkg_fk');
             $table->dropColumn('company_subscription_package_id');
         });
     }
