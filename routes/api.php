@@ -53,6 +53,7 @@ Route::prefix('v1')->group(function () {
             Route::put('profile', [CompanyProfileController::class, 'update']);
             Route::get('subscription/offer', [CompanySubscriptionController::class, 'offer']);
             Route::post('subscription/purchase', [CompanySubscriptionController::class, 'purchase']);
+            Route::get('subscription/history', [CompanySubscriptionController::class, 'history']);
             Route::get('job-posts', [CompanyJobPostController::class, 'index']);
             Route::post('job-posts', [CompanyJobPostController::class, 'store']);
             Route::put('job-posts/{id}', [CompanyJobPostController::class, 'update'])->whereNumber('id');
@@ -65,6 +66,8 @@ Route::prefix('v1')->group(function () {
         Route::prefix('job-seeker')->middleware('role:job_seeker')->group(function () {
             Route::get('profile', [JobSeekerProfileController::class, 'show']);
             Route::put('profile', [JobSeekerProfileController::class, 'update']);
+            Route::post('profile/resume', [JobSeekerProfileController::class, 'uploadResumePdf'])
+                ->middleware('throttle:20,1');
             Route::get('packages/catalog', [JobSeekerPackageController::class, 'catalog']);
             Route::get('packages/purchases', [JobSeekerPackageController::class, 'purchases']);
             Route::post('packages/select', [JobSeekerPackageController::class, 'select']);

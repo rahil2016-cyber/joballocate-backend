@@ -8,6 +8,7 @@ use App\Support\IndustryType;
 use App\Support\ProfileCompletion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class JobSeekerProfileController extends Controller
 {
@@ -71,5 +72,34 @@ class JobSeekerProfileController extends Controller
         $data['profile_completion_percent'] = ProfileCompletion::seekerPercent($user, $fresh);
 
         return $this->ok($data, 'Profile updated.');
+    }
+
+    public function uploadResumePdf(Request $request): JsonResponse
+    {
+        $profile = $request->user()->jobSeekerProfile;
+
+        if (! $profile) {
+            return $this->fail('Profile not found.', null, 404);
+        }
+
+        $validated = $request->validate([
+            'resume' => ['required', 'file', 'mimetypes:application/pdf', 'max:5120'], // 5MB
+        ]);
+
+        /** @var \Illuminate\Http\UploadedFile $file */
+        $file = $validated['resume'];
+
+        $name = 'resume_'.$request->user()->id.'_'.time().'.pdf';
+        $path = $file->storeAs('resumes', $name, 'public');
+
+        $profile->resume_url = url('/media/resumes/'.basename($path));
+        $profile->save();
+
+        $fresh = $profile->fresh();
+        $user = $request->user();
+        $data = $fresh->toArray();
+        $data['profile_completion_percent'] = ProfileCompletion::seekerPercent($user, $fresh);
+
+        return $this->ok($data, 'Resume uploaded.');
     }
 }

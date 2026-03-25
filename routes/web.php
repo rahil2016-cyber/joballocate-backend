@@ -26,3 +26,22 @@ Route::get('/media/banner-ads/{file}', function (string $file) {
         'Cache-Control' => 'public, max-age=86400',
     ]);
 })->where('file', '[a-zA-Z0-9._-]+');
+
+/*
+| Job seeker resumes (PDF): stream from storage/app/public/resumes — no symlink required.
+*/
+Route::get('/media/resumes/{file}', function (string $file) {
+    $file = basename($file);
+    if ($file === '' || ! preg_match('/^[a-zA-Z0-9._-]+$/', $file)) {
+        abort(404);
+    }
+
+    $path = 'resumes/'.$file;
+    if (! Storage::disk('public')->exists($path)) {
+        abort(404);
+    }
+
+    return Storage::disk('public')->response($path, null, [
+        'Cache-Control' => 'public, max-age=3600',
+    ]);
+})->where('file', '[a-zA-Z0-9._-]+');

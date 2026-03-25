@@ -16,6 +16,30 @@ class CompanySubscriptionController extends Controller
 {
     use ApiResponses;
 
+    private function inferStateDistrictFromLocation(Company $company): array
+    {
+        [$state, $district] = $this->inferStateDistrictFromLocation($company);
+
+        if ((filled($state) && filled($district)) || ! filled($company->location)) {
+            return [$state, $district];
+        }
+
+        $parts = array_values(array_filter(array_map(
+            fn ($p) => trim((string) $p),
+            explode(',', (string) $company->location)
+        ), fn ($p) => $p !== ''));
+
+        // Common legacy format: "city, district, state"
+        if (! filled($state) && count($parts) >= 1) {
+            $state = $parts[count($parts) - 1];
+        }
+        if (! filled($district) && count($parts) >= 2) {
+            $district = $parts[count($parts) - 2];
+        }
+
+        return [$state, $district];
+    }
+
     private function matchCouponToCompany(CompanyCoupon $coupon, Company $company): bool
     {
         $targetType = (string) $coupon->target_type;
@@ -30,12 +54,12 @@ class CompanySubscriptionController extends Controller
         }
 
         if ($targetType === 'state') {
-            $s = $company->state;
+            [$s] = $this->inferStateDistrictFromLocation($company);
             return $s !== null && mb_strtolower(trim($s)) === $needle;
         }
 
         if ($targetType === 'district') {
-            $d = $company->district;
+            [, $d] = $this->inferStateDistrictFromLocation($company);
             return $d !== null && mb_strtolower(trim($d)) === $needle;
         }
 
@@ -75,8 +99,7 @@ class CompanySubscriptionController extends Controller
 
         $alreadyPurchasedFirstMonth = $cycle1 !== null;
 
-        $state = $company->state;
-        $district = $company->district;
+        [$state, $district] = $this->inferStateDistrictFromLocation($company);
 
         $eligibleCoupons = CompanyCoupon::query()
             ->where('is_active', true)
@@ -294,6 +317,33 @@ class CompanySubscriptionController extends Controller
             'applied_coupon_code' => $appliedCoupon?->code,
             'message' => $isFree ? '1st month activated for free.' : 'Subscription month purchased successfully.',
         ]);
+    }
+
+    public function history(Request $request): JsonResponse
+    {
+        $company = $request->user()->company;
+        if (! $company) {
+            return $this->fail('Company profile not found.', null, 404);
+        }
+
+        $rows = CompanySubscriptionPayment::query()
+            ->where('company_id', $company->id)
+            ->orderByDesc('id')
+            ->limit(60)
+            ->get()
+            ->map(fn (CompanySubscriptionPayment $p) => [
+                'id' => $p->id,
+                'cycle_number' => (int) $p->cycle_number,
+                'amount_inr' => (int) $p->amount_inr,
+                'is_free' => (bool) $p->is_free,
+                'coupon_code_used' => $p->coupon_code_used,
+                'purchased_at' => $p->purchased_at?->toISOString(),
+                'package_id' => $p->company_subscription_package_id,
+            ])
+            ->values()
+            ->all();
+
+        return $this->ok(['items' => $rows]);
     }
 }
 
