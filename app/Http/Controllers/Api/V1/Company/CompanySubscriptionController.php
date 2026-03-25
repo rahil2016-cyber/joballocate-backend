@@ -18,7 +18,8 @@ class CompanySubscriptionController extends Controller
 
     private function inferStateDistrictFromLocation(Company $company): array
     {
-        [$state, $district] = $this->inferStateDistrictFromLocation($company);
+        $state = $company->state;
+        $district = $company->district;
 
         if ((filled($state) && filled($district)) || ! filled($company->location)) {
             return [$state, $district];
@@ -68,23 +69,39 @@ class CompanySubscriptionController extends Controller
 
     public function offer(Request $request): JsonResponse
     {
-        $company = $request->user()->company;
+        try {
+            $company = $request->user()->company;
 
-        if (! $company) {
-            return $this->fail('Company profile not found.', null, 404);
-        }
+            if (! $company) {
+                return $this->fail('Company profile not found.', null, 404);
+            }
 
-        $verified = $company->isVerified();
+            $verified = $company->isVerified();
 
-        $activePackage = CompanySubscriptionPackage::query()
-            ->where('is_active', true)
-            ->orderByDesc('sort_order')
-            ->orderByDesc('id')
-            ->first();
+            $activePackage = CompanySubscriptionPackage::query()
+                ->where('is_active', true)
+                ->orderByDesc('sort_order')
+                ->orderByDesc('id')
+                ->first();
 
-        $packageId = $activePackage?->id;
-        $monthlyPriceInr = (int) ($activePackage?->monthly_price_inr ?? 399);
-        $packageTitle = (string) ($activePackage?->title ?? 'Company Subscription');
+            $packageId = $activePackage?->id;
+            $monthlyPriceInr = (int) ($activePackage?->monthly_price_inr ?? 399);
+            $packageTitle = (string) ($activePackage?->title ?? 'Company Subscription');
+
+            if ($packageId === null) {
+                return $this->ok([
+                    'verified' => $verified,
+                    'package_title' => $packageTitle,
+                    'monthly_price_inr' => $monthlyPriceInr,
+                    'first_month' => [
+                        'already_purchased' => false,
+                        'is_free_eligible' => false,
+                        'eligible_coupon_codes' => [],
+                        'suggested_coupon_code' => null,
+                        'message' => 'No active subscription package configured by admin yet.',
+                    ],
+                ]);
+            }
 
         $cycle1 = CompanySubscriptionPayment::query()
             ->when($packageId !== null, fn ($q) => $q
@@ -189,7 +206,7 @@ class CompanySubscriptionController extends Controller
 
         $suggested = $eligibleFreeCoupons->first();
 
-        return $this->ok([
+            return $this->ok([
             'verified' => true,
             'package_title' => $packageTitle,
             'monthly_price_inr' => $monthlyPriceInr,
@@ -203,7 +220,10 @@ class CompanySubscriptionController extends Controller
             'renewal' => [
                 'message' => 'For next months, eligible coupons can provide % renewal discounts.',
             ],
-        ]);
+            ]);
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage() ?: 'Failed to load subscription offer.', null, 500);
+        }
     }
 
     public function purchase(Request $request): JsonResponse
