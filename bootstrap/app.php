@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Http\Exceptions\MaintenanceModeException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,5 +19,30 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Throwable $e, $request) {
+            // Force JSON responses for API routes (prevents HTML 503 pages breaking Flutter JSON decoding).
+            $isApi = $request->is('api/*') || $request->expectsJson();
+            if (! $isApi) {
+                return null;
+            }
+
+            $status = 500;
+            $message = 'Server error.';
+
+            if ($e instanceof MaintenanceModeException) {
+                $status = 503;
+                $message = 'Service temporarily unavailable.';
+            } elseif ($e instanceof HttpExceptionInterface) {
+                $status = $e->getStatusCode();
+                $message = $e->getMessage() ?: 'Request failed.';
+            } else {
+                $message = $e->getMessage() ?: $message;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'data' => null,
+            ], $status);
+        });
     })->create();
