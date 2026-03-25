@@ -9,6 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('company_subscription_payments', function (Blueprint $table) {
+            // Make safe to run even if partially applied.
             if (! Schema::hasColumn('company_subscription_payments', 'created_at')) {
                 $table->timestamp('created_at')->nullable();
             }
