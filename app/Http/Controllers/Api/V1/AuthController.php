@@ -85,6 +85,10 @@ class AuthController extends Controller
             'name' => [Rule::requiredIf(fn () => $request->input('intent') === 'register'), 'nullable', 'string', 'max:120'],
             'company_name' => [Rule::requiredIf(fn () => $request->input('intent') === 'register' && $request->input('role') === UserRole::Company->value), 'nullable', 'string', 'max:160'],
             'gst_number' => ['nullable', 'string', 'max:32'],
+            // Full India location fields (required on register; city is writeable/optional).
+            'state' => [Rule::requiredIf(fn () => $request->input('intent') === 'register'), 'nullable', 'string', 'max:120'],
+            'district' => [Rule::requiredIf(fn () => $request->input('intent') === 'register'), 'nullable', 'string', 'max:120'],
+            'city' => ['nullable', 'string', 'max:120'],
         ]);
 
         if ($validated['role'] === UserRole::SuperAdmin->value) {
@@ -150,18 +154,34 @@ class AuthController extends Controller
             $verified = $this->settings->autoVerifyCompanies()
                 ? CompanyVerificationStatus::Verified
                 : CompanyVerificationStatus::Unverified;
+
+            $locParts = array_values(array_filter([
+                $validated['city'] ?? null,
+                $validated['district'] ?? null,
+                $validated['state'] ?? null,
+            ]));
+            $location = implode(', ', $locParts);
+
             Company::create([
                 'user_id' => $user->id,
                 'name' => $validated['company_name'],
                 'slug' => $slug,
                 'gst_number' => $validated['gst_number'] ?? null,
                 'verification_status' => $verified,
+                'state' => $validated['state'] ?? null,
+                'district' => $validated['district'] ?? null,
+                'city' => $validated['city'] ?? null,
+                // Keep legacy `location` string so existing UI doesn't break.
+                'location' => $location !== '' ? $location : null,
             ]);
         }
 
         if ($validated['role'] === UserRole::JobSeeker->value) {
             JobSeekerProfile::create([
                 'user_id' => $user->id,
+                'state' => $validated['state'] ?? null,
+                'district' => $validated['district'] ?? null,
+                'city' => $validated['city'] ?? null,
             ]);
         }
 

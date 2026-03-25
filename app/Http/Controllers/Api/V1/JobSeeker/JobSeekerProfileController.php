@@ -55,6 +55,8 @@ class JobSeekerProfileController extends Controller
             'currency' => ['nullable', 'string', 'max:8'],
             'city' => ['nullable', 'string', 'max:120'],
             'country' => ['nullable', 'string', 'max:120'],
+            'state' => ['nullable', 'string', 'max:120'],
+            'district' => ['nullable', 'string', 'max:120'],
             'industry_type' => IndustryType::rule(),
             'date_of_birth' => ['nullable', 'date'],
             'resume_url' => ['nullable', 'url', 'max:500'],

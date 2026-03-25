@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\AdminCompanyController;
+use App\Http\Controllers\Api\V1\Admin\AdminCompanyCouponController;
+use App\Http\Controllers\Api\V1\Admin\AdminCompanySubscriptionPackageController;
 use App\Http\Controllers\Api\V1\Admin\AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\AdminJobPostController;
 use App\Http\Controllers\Api\V1\Admin\AdminAnalyticsController;
@@ -13,6 +15,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\Company\CompanyApplicationController;
 use App\Http\Controllers\Api\V1\Company\CompanyJobPostController;
 use App\Http\Controllers\Api\V1\Company\CompanyProfileController;
+use App\Http\Controllers\Api\V1\Company\CompanySubscriptionController;
 use App\Http\Controllers\Api\V1\JobSeeker\JobSeekerPackageController;
 use App\Http\Controllers\Api\V1\JobSeeker\JobSeekerProfileController;
 use App\Http\Controllers\Api\V1\JobSeeker\ResumeDraftController;
@@ -23,6 +26,7 @@ use App\Http\Controllers\Api\V1\JobSeeker\SeekerApplicationController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerSavedJobController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\PublicBannerController;
+use App\Http\Controllers\Api\V1\PublicLocationController;
 use App\Http\Controllers\Api\V1\PublicJobController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +39,10 @@ Route::prefix('v1')->group(function () {
     Route::get('jobs/{id}', [PublicJobController::class, 'show'])->whereNumber('id');
     Route::get('banners', [PublicBannerController::class, 'index']);
 
+    // Location dropdown data (Full India)
+    Route::get('locations/states', [PublicLocationController::class, 'states']);
+    Route::get('locations/districts', [PublicLocationController::class, 'districts']);
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::post('auth/change-password', [AuthController::class, 'changePassword']);
@@ -43,6 +51,8 @@ Route::prefix('v1')->group(function () {
         Route::prefix('company')->middleware('role:company')->group(function () {
             Route::get('profile', [CompanyProfileController::class, 'show']);
             Route::put('profile', [CompanyProfileController::class, 'update']);
+            Route::get('subscription/offer', [CompanySubscriptionController::class, 'offer']);
+            Route::post('subscription/purchase', [CompanySubscriptionController::class, 'purchase']);
             Route::get('job-posts', [CompanyJobPostController::class, 'index']);
             Route::post('job-posts', [CompanyJobPostController::class, 'store']);
             Route::put('job-posts/{id}', [CompanyJobPostController::class, 'update'])->whereNumber('id');
@@ -105,6 +115,22 @@ Route::prefix('v1')->group(function () {
             Route::patch('banner-ads/{bannerId}/start', [AdminBannerAdController::class, 'start'])->whereNumber('bannerId');
             Route::patch('banner-ads/{bannerId}/stop', [AdminBannerAdController::class, 'stop'])->whereNumber('bannerId');
             Route::delete('banner-ads/{bannerId}', [AdminBannerAdController::class, 'destroy'])->whereNumber('bannerId');
+
+            // Company coupons (targeted by state/district)
+            Route::get('company-coupons', [AdminCompanyCouponController::class, 'index']);
+            Route::post('company-coupons', [AdminCompanyCouponController::class, 'store']);
+            Route::delete('company-coupons/{couponId}', [AdminCompanyCouponController::class, 'destroy'])
+                ->whereNumber('couponId');
+
+            // Company subscription packages + coupons inside each package
+            Route::get('company-packages', [AdminCompanySubscriptionPackageController::class, 'index']);
+            Route::post('company-packages', [AdminCompanySubscriptionPackageController::class, 'store']);
+            Route::patch('company-packages/{packageId}', [AdminCompanySubscriptionPackageController::class, 'update'])
+                ->whereNumber('packageId');
+            Route::delete('company-packages/{packageId}', [AdminCompanySubscriptionPackageController::class, 'destroy'])
+                ->whereNumber('packageId');
+            Route::get('company-packages/{packageId}/coupons', [AdminCompanySubscriptionPackageController::class, 'coupons'])
+                ->whereNumber('packageId');
         });
     });
 });

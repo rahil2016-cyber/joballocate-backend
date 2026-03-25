@@ -19,6 +19,8 @@ class JobSeekerProfile extends Model
         'currency',
         'city',
         'country',
+        'state',
+        'district',
         'industry_type',
         'date_of_birth',
         'resume_url',
