@@ -20,6 +20,7 @@ class JobSeekerPackageController extends Controller
         $rows = SeekerPackage::query()
             ->active()
             ->ordered()
+            ->whereNotIn('kind', ['resume', 'combo'])
             ->get()
             ->map(fn (SeekerPackage $p) => [
                 'key' => $p->key,
@@ -96,6 +97,14 @@ class JobSeekerPackageController extends Controller
             ->where('key', $validated['package_key'])
             ->where('is_active', true)
             ->firstOrFail();
+
+        if (in_array($pkg->kind, ['resume', 'combo'], true)) {
+            return $this->fail(
+                'Resume-only and combo plans are discontinued. Use a job applications plan, or build your resume for free and pay ₹20 only when you download the PDF.',
+                null,
+                422
+            );
+        }
 
         $activatedAt = now();
         $expiresAt = $activatedAt->copy()->addDays($pkg->duration_days);
