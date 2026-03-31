@@ -161,7 +161,7 @@ class AdminAnalyticsController extends Controller
             ->pluck('dt', 'user_id');
 
         $resumePurchases = SeekerPackagePurchase::query()
-            ->selectRaw('user_id, SUM(CASE WHEN kind IN ("resume","combo") THEN 1 ELSE 0 END) as c')
+            ->selectRaw('user_id, SUM(CASE WHEN kind IN ("resume","resume_pdf","combo") THEN 1 ELSE 0 END) as c')
             ->whereIn('user_id', $ids)
             ->groupBy('user_id')
             ->pluck('c', 'user_id');

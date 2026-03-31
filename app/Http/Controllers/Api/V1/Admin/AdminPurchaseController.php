@@ -16,7 +16,7 @@ class AdminPurchaseController extends Controller
     public function index(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'kind' => ['nullable', Rule::in(['job_applications', 'resume', 'combo'])],
+            'kind' => ['nullable', Rule::in(['job_applications', 'resume', 'resume_pdf', 'combo', 'resume_all'])],
             'search' => ['nullable', 'string', 'max:120'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
@@ -26,8 +26,11 @@ class AdminPurchaseController extends Controller
             ->latest('activated_at')
             ->latest('id');
 
-        if (! empty($validated['kind'] ?? null)) {
-            $q->where('kind', $validated['kind']);
+        $kind = $validated['kind'] ?? null;
+        if ($kind === 'resume_all') {
+            $q->whereIn('kind', ['resume', 'resume_pdf']);
+        } elseif (! empty($kind)) {
+            $q->where('kind', $kind);
         }
 
         if (! empty($validated['search'] ?? null)) {

@@ -17,6 +17,8 @@ class SeekerPackagePurchase extends Model
         'duration_days',
         'applications_granted',
         'resume_builds_granted',
+        'resume_template_id',
+        'resume_template_title',
         'activated_at',
         'expires_at',
     ];

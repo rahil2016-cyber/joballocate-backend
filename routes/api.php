@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\V1\JobSeeker\JobSeekerProfileController;
 use App\Http\Controllers\Api\V1\JobSeeker\ResumeDraftController;
 use App\Http\Controllers\Api\V1\JobSeeker\ResumeAiController;
 use App\Http\Controllers\Api\V1\JobSeeker\ResumeOneOffController;
+use App\Http\Controllers\Api\V1\JobSeeker\ResumePdfPurchaseController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerActivityController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerApplicationController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerSavedJobController;
@@ -84,6 +85,8 @@ Route::prefix('v1')->group(function () {
                 ->middleware('throttle:15,1');
             Route::post('resume/one-off-purchase', [ResumeOneOffController::class, 'purchase'])
                 ->middleware('throttle:20,1');
+            Route::post('resume/pdf-purchase', [ResumePdfPurchaseController::class, 'purchase'])
+                ->middleware('throttle:30,1');
             Route::get('resume/drafts', [ResumeDraftController::class, 'index']);
             Route::post('resume/primary', [ResumeDraftController::class, 'setPrimary'])
                 ->middleware('throttle:60,1');
