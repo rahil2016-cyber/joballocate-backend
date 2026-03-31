@@ -6,8 +6,8 @@ use App\Models\SeekerPackage;
 use Illuminate\Database\Seeder;
 
 /**
- * Job seeker catalog: job-application credits, resume-builder credits, and combos.
- * Admin panel can manage these rows later; app reads via API (no hardcoded catalog).
+ * Job seeker catalog: job-application plans are sold here. Resume-only and combo rows
+ * stay in DB for history but are inactive — the app builds resumes for free; PDF is ₹20 on export.
  */
 class SeekerPackageSeeder extends Seeder
 {
@@ -83,9 +83,10 @@ class SeekerPackageSeeder extends Seeder
         ];
 
         foreach ($rows as $row) {
+            $inactive = in_array($row['kind'], ['resume', 'combo'], true);
             SeekerPackage::query()->updateOrCreate(
                 ['key' => $row['key']],
-                array_merge($row, ['is_active' => true])
+                array_merge($row, ['is_active' => ! $inactive])
             );
         }
     }
