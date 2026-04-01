@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\V1\Admin\AdminJobPostController;
 use App\Http\Controllers\Api\V1\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Api\V1\Admin\AdminBannerAdController;
 use App\Http\Controllers\Api\V1\Admin\AdminPurchaseController;
+use App\Http\Controllers\Api\V1\Admin\AdminCareerContentController;
+use App\Http\Controllers\Api\V1\Admin\AdminSeekerFeedbackController;
 use App\Http\Controllers\Api\V1\Admin\AdminSeekerPackageController;
 use App\Http\Controllers\Api\V1\Admin\AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
@@ -22,6 +24,8 @@ use App\Http\Controllers\Api\V1\JobSeeker\ResumeDraftController;
 use App\Http\Controllers\Api\V1\JobSeeker\ResumeAiController;
 use App\Http\Controllers\Api\V1\JobSeeker\ResumePdfPurchaseController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerActivityController;
+use App\Http\Controllers\Api\V1\JobSeeker\SeekerCareerContentController;
+use App\Http\Controllers\Api\V1\JobSeeker\SeekerFeedbackController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerApplicationController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerSavedJobController;
 use App\Http\Controllers\Api\V1\MeController;
@@ -89,6 +93,12 @@ Route::prefix('v1')->group(function () {
                 ->middleware('throttle:60,1');
             Route::post('resume/save', [ResumeDraftController::class, 'store'])
                 ->middleware('throttle:60,1');
+            Route::get('career/contents', [SeekerCareerContentController::class, 'index']);
+            Route::post('career/contents/{careerContent}/helpful', [SeekerCareerContentController::class, 'setHelpful'])
+                ->middleware('throttle:60,1');
+            Route::get('feedback', [SeekerFeedbackController::class, 'index']);
+            Route::post('feedback', [SeekerFeedbackController::class, 'store'])
+                ->middleware('throttle:20,1');
         });
 
         Route::prefix('admin')->middleware('role:super_admin')->group(function () {
@@ -108,6 +118,12 @@ Route::prefix('v1')->group(function () {
             Route::post('seeker-packages', [AdminSeekerPackageController::class, 'store']);
             Route::patch('seeker-packages/{packageId}', [AdminSeekerPackageController::class, 'update'])->whereNumber('packageId');
             Route::delete('seeker-packages/{packageId}', [AdminSeekerPackageController::class, 'destroy'])->whereNumber('packageId');
+            Route::get('career-contents', [AdminCareerContentController::class, 'index']);
+            Route::post('career-contents', [AdminCareerContentController::class, 'store']);
+            Route::patch('career-contents/{careerContent}', [AdminCareerContentController::class, 'update']);
+            Route::delete('career-contents/{careerContent}', [AdminCareerContentController::class, 'destroy']);
+            Route::get('seeker-feedback', [AdminSeekerFeedbackController::class, 'index']);
+            Route::patch('seeker-feedback/{seekerFeedback}', [AdminSeekerFeedbackController::class, 'update']);
             Route::get('analytics/overview', [AdminAnalyticsController::class, 'overview']);
             Route::get('analytics/job-seekers', [AdminAnalyticsController::class, 'seekerUsage']);
             Route::get('settings/moderation', [AdminSettingController::class, 'showModeration']);
