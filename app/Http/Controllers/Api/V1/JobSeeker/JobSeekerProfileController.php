@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Api\V1\JobSeeker;
 
 use App\Http\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
+use App\Support\Base64Image;
 use App\Support\IndustryType;
 use App\Support\ProfileCompletion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 
 class JobSeekerProfileController extends Controller
 {
@@ -61,9 +62,30 @@ class JobSeekerProfileController extends Controller
             'industry_type' => IndustryType::rule(),
             'date_of_birth' => ['nullable', 'date'],
             'resume_url' => ['nullable', 'url', 'max:500'],
+            'profile_photo_url' => ['nullable', 'url', 'max:500'],
+            /** Raw base64 image (Flutter); stored as public file, sets `profile_photo_url`. */
+            'profile_photo' => ['nullable', 'string', 'max:3500000'],
         ]);
 
+        $photoB64 = $validated['profile_photo'] ?? null;
+        unset($validated['profile_photo']);
+
         $profile->fill($validated);
+
+        if (filled($photoB64)) {
+            $url = Base64Image::storeFromRawBase64(
+                $photoB64,
+                'profile-photos',
+                'seeker-'.$request->user()->id,
+            );
+            if ($url === null) {
+                return $this->fail('Could not save profile photo. Use a JPEG, PNG, WebP, or GIF under ~2MB.', [
+                    'profile_photo' => ['Invalid image data.'],
+                ], 422);
+            }
+            $profile->profile_photo_url = $url;
+        }
+
         $profile->save();
 
         $fresh = $profile->fresh();
@@ -86,7 +108,7 @@ class JobSeekerProfileController extends Controller
             'resume' => ['required', 'file', 'mimetypes:application/pdf', 'max:5120'], // 5MB
         ]);
 
-        /** @var \Illuminate\Http\UploadedFile $file */
+        /** @var UploadedFile $file */
         $file = $validated['resume'];
 
         $name = 'resume_'.$request->user()->id.'_'.time().'.pdf';

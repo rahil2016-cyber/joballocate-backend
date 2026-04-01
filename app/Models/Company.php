@@ -9,6 +9,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Company extends Model
 {
+    protected $appends = [
+        'company_logo_url',
+    ];
+
     protected $fillable = [
         'user_id',
         'name',
@@ -39,6 +43,12 @@ class Company extends Model
             'verification_status' => CompanyVerificationStatus::class,
             'team_members' => 'array',
         ];
+    }
+
+    /** Alias for mobile/admin UIs that expect `company_logo_url`. */
+    public function getCompanyLogoUrlAttribute(): ?string
+    {
+        return $this->logo_url;
     }
 
     public function owner(): BelongsTo

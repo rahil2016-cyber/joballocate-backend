@@ -14,7 +14,7 @@ class ProfileCompletion
     public static function seekerPercent(User $user, JobSeekerProfile $p): int
     {
         $checks = 0;
-        $total = 12;
+        $total = 13;
 
         if (filled($p->headline)) {
             $checks++;
@@ -47,6 +47,9 @@ class ProfileCompletion
             $checks++;
         }
         if (filled($p->resume_url)) {
+            $checks++;
+        }
+        if (filled($p->profile_photo_url)) {
             $checks++;
         }
         if ($p->date_of_birth !== null) {

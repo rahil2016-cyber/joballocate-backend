@@ -24,6 +24,7 @@ class JobSeekerProfile extends Model
         'industry_type',
         'date_of_birth',
         'resume_url',
+        'profile_photo_url',
         'primary_resume_draft_id',
         'package_key',
         'job_package_key',

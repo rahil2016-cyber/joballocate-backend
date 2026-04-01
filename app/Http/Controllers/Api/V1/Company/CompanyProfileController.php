@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Company;
 
 use App\Http\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
+use App\Support\Base64Image;
 use App\Support\IndustryType;
 use App\Support\ProfileCompletion;
 use Illuminate\Http\JsonResponse;
@@ -40,7 +41,7 @@ class CompanyProfileController extends Controller
             'name' => ['sometimes', 'string', 'max:160'],
             'industry' => ['nullable', 'string', 'max:120'],
             'industry_type' => IndustryType::rule(),
-            'website' => ['nullable', 'url', 'max:255'],
+            'website' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
             'gst_number' => ['nullable', 'string', 'max:32'],
             'location' => ['nullable', 'string', 'max:255'],
@@ -55,9 +56,36 @@ class CompanyProfileController extends Controller
             'team_members.*.role' => ['nullable', 'string', 'max:120'],
             'team_members.*.email' => ['nullable', 'string', 'max:255'],
             'logo_url' => ['nullable', 'url', 'max:500'],
+            /** Raw base64 image bytes (Flutter); stored as public file, sets `logo_url`. */
+            'company_logo' => ['nullable', 'string', 'max:3500000'],
         ]);
 
+        $companyLogo = $validated['company_logo'] ?? null;
+        unset($validated['company_logo']);
+
+        if ($validated['website'] ?? null) {
+            $w = trim((string) $validated['website']);
+            if ($w !== '' && ! preg_match('#^https?://#i', $w)) {
+                $w = 'https://'.$w;
+            }
+            $validated['website'] = $w === '' ? null : $w;
+            if ($validated['website'] !== null && filter_var($validated['website'], FILTER_VALIDATE_URL) === false) {
+                return $this->fail('Enter a valid website URL.', ['website' => ['Invalid URL.']], 422);
+            }
+        }
+
         $company->fill($validated);
+
+        if (filled($companyLogo)) {
+            $url = Base64Image::storeFromRawBase64($companyLogo, 'company-logos', 'company-'.$company->id);
+            if ($url === null) {
+                return $this->fail('Could not save company logo. Use a JPEG, PNG, WebP, or GIF under ~2MB.', [
+                    'company_logo' => ['Invalid image data.'],
+                ], 422);
+            }
+            $company->logo_url = $url;
+        }
+
         $company->save();
 
         $fresh = $company->fresh();
