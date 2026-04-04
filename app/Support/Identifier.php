@@ -42,4 +42,14 @@ final class Identifier
 
         throw new \InvalidArgumentException('Identifier must contain a valid email or phone.');
     }
+
+    /** True for placeholder emails created for phone-only registration. */
+    public static function isSyntheticEmail(?string $email): bool
+    {
+        if ($email === null || $email === '') {
+            return false;
+        }
+
+        return str_ends_with(strtolower($email), '@internal.joballocate');
+    }
 }

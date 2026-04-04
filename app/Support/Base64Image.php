@@ -47,6 +47,7 @@ final class Base64Image
 
         Storage::disk('public')->put($relativePath, $binary);
 
-        return Storage::disk('public')->url($relativePath);
+        // Always return an absolute URL so mobile clients (and browsers) load images reliably.
+        return asset('storage/'.$relativePath);
     }
 }

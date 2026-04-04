@@ -270,13 +270,15 @@ class AuthController extends Controller
     {
         $token = $user->createToken('api')->plainTextToken;
 
+        $emailOut = Identifier::isSyntheticEmail($user->email) ? null : $user->email;
+
         return $this->ok([
             'token' => $token,
             'token_type' => 'Bearer',
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
-                'email' => $user->email,
+                'email' => $emailOut,
                 'phone' => $user->phone,
                 'role' => $user->role,
             ],

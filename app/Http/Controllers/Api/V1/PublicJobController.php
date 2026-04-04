@@ -4,15 +4,18 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\JobPostStatus;
 use App\Http\Concerns\ApiResponses;
+use App\Http\Concerns\TransformsPublicJobPost;
 use App\Http\Controllers\Controller;
 use App\Models\JobPost;
 use App\Support\IndustryType;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PublicJobController extends Controller
 {
     use ApiResponses;
+    use TransformsPublicJobPost;
 
     public function index(Request $request): JsonResponse
     {
@@ -22,6 +25,8 @@ class PublicJobController extends Controller
             'search' => ['sometimes', 'string', 'max:200'],
             'location' => ['sometimes', 'string', 'max:120'],
             'industry_type' => IndustryType::rule(),
+            'company_id' => ['sometimes', 'integer', 'exists:companies,id'],
+            'published_after' => ['sometimes', 'string', 'max:40'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:50'],
         ]);
 
@@ -45,6 +50,18 @@ class PublicJobController extends Controller
 
         if (! empty($validated['industry_type'] ?? null)) {
             $q->where('industry_type', $validated['industry_type']);
+        }
+
+        if (! empty($validated['company_id'] ?? null)) {
+            $q->where('company_id', (int) $validated['company_id']);
+        }
+
+        if (! empty($validated['published_after'] ?? null)) {
+            try {
+                $q->where('published_at', '>=', Carbon::parse($validated['published_after'])->startOfDay());
+            } catch (\Throwable) {
+                // ignore invalid date
+            }
         }
 
         $perPage = $validated['per_page'] ?? 15;
@@ -79,30 +96,6 @@ class PublicJobController extends Controller
             return $this->fail('Job not found.', null, 404);
         }
 
-        return $this->ok($this->transformJob($job));
-    }
-
-    private function transformJob(JobPost $job): array
-    {
-        return [
-            'id' => $job->id,
-            'title' => $job->title,
-            'slug' => $job->slug,
-            'location' => $job->location,
-            'employment_type' => $job->employment_type,
-            'experience_level' => $job->experience_level,
-            'industry_type' => $job->industry_type,
-            'salary_min' => $job->salary_min,
-            'salary_max' => $job->salary_max,
-            'currency' => $job->currency,
-            'description' => $job->description,
-            'requirements' => $job->requirements,
-            'skills' => $job->skills,
-            'published_at' => $job->published_at?->toIso8601String(),
-            'application_deadline_at' => $job->application_deadline_at?->toIso8601String(),
-            'max_applications' => $job->max_applications,
-            'applications_count' => $job->applications_count,
-            'company' => $job->company,
-        ];
+        return $this->ok($this->transformListedJob($job));
     }
 }

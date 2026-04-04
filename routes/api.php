@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminCompanyCouponController;
 use App\Http\Controllers\Api\V1\Admin\AdminCompanySubscriptionPackageController;
 use App\Http\Controllers\Api\V1\Admin\AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\AdminJobPostController;
+use App\Http\Controllers\Api\V1\Admin\AdminApplicationController;
 use App\Http\Controllers\Api\V1\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Api\V1\Admin\AdminBannerAdController;
 use App\Http\Controllers\Api\V1\Admin\AdminPurchaseController;
@@ -24,12 +25,15 @@ use App\Http\Controllers\Api\V1\JobSeeker\ResumeDraftController;
 use App\Http\Controllers\Api\V1\JobSeeker\ResumeAiController;
 use App\Http\Controllers\Api\V1\JobSeeker\ResumePdfPurchaseController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerActivityController;
+use App\Http\Controllers\Api\V1\JobSeeker\SeekerCareerAiController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerCareerContentController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerFeedbackController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerApplicationController;
+use App\Http\Controllers\Api\V1\JobSeeker\SeekerJobDiscoveryController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerSavedJobController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\PublicBannerController;
+use App\Http\Controllers\Api\V1\PublicTopCompaniesController;
 use App\Http\Controllers\Api\V1\PublicLocationController;
 use App\Http\Controllers\Api\V1\PublicJobController;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +45,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('jobs', [PublicJobController::class, 'index']);
     Route::get('jobs/{id}', [PublicJobController::class, 'show'])->whereNumber('id');
+    Route::get('companies/top', [PublicTopCompaniesController::class, 'index']);
     Route::get('banners', [PublicBannerController::class, 'index']);
 
     // Location dropdown data (Full India)
@@ -80,6 +85,8 @@ Route::prefix('v1')->group(function () {
                 ->whereNumber('applicationId');
             Route::post('jobs/{jobId}/apply', [SeekerApplicationController::class, 'store'])->whereNumber('jobId');
             Route::get('saved-jobs', [SeekerSavedJobController::class, 'index']);
+            Route::get('recommended-jobs', [SeekerJobDiscoveryController::class, 'recommended']);
+            Route::get('related-jobs', [SeekerJobDiscoveryController::class, 'relatedFromApplications']);
             Route::post('jobs/{jobId}/save', [SeekerSavedJobController::class, 'store'])->whereNumber('jobId');
             Route::delete('jobs/{jobId}/save', [SeekerSavedJobController::class, 'destroy'])->whereNumber('jobId');
             Route::post('activity/time', [SeekerActivityController::class, 'addTime'])
@@ -93,6 +100,8 @@ Route::prefix('v1')->group(function () {
                 ->middleware('throttle:60,1');
             Route::post('resume/save', [ResumeDraftController::class, 'store'])
                 ->middleware('throttle:60,1');
+            Route::post('career/ai-coach', [SeekerCareerAiController::class, 'coach'])
+                ->middleware('throttle:20,1');
             Route::get('career/contents', [SeekerCareerContentController::class, 'index']);
             Route::post('career/contents/{careerContent}/helpful', [SeekerCareerContentController::class, 'setHelpful'])
                 ->middleware('throttle:60,1');
@@ -107,6 +116,9 @@ Route::prefix('v1')->group(function () {
             Route::get('companies/{companyId}', [AdminCompanyController::class, 'show'])->whereNumber('companyId');
             Route::patch('companies/{companyId}/verification', [AdminCompanyController::class, 'updateVerification'])->whereNumber('companyId');
             Route::patch('companies/{companyId}/owner-status', [AdminCompanyController::class, 'updateOwnerStatus'])->whereNumber('companyId');
+            Route::get('applications', [AdminApplicationController::class, 'index']);
+            Route::get('applications/{application}', [AdminApplicationController::class, 'show'])->whereNumber('application');
+            Route::patch('applications/{application}', [AdminApplicationController::class, 'update'])->whereNumber('application');
             Route::get('job-posts', [AdminJobPostController::class, 'index']);
             Route::get('job-posts/{jobId}', [AdminJobPostController::class, 'show'])->whereNumber('jobId');
             Route::patch('job-posts/{jobId}/moderation', [AdminJobPostController::class, 'moderate'])->whereNumber('jobId');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
+use App\Support\Identifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,10 +16,12 @@ class MeController extends Controller
     {
         $user = $request->user()->load(['company', 'jobSeekerProfile']);
 
+        $emailOut = Identifier::isSyntheticEmail($user->email) ? null : $user->email;
+
         return $this->ok([
             'id' => $user->id,
             'name' => $user->name,
-            'email' => $user->email,
+            'email' => $emailOut,
             'phone' => $user->phone,
             'role' => $user->role,
             'company' => $user->company ? [

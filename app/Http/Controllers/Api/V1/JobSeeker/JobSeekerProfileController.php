@@ -5,11 +5,15 @@ namespace App\Http\Controllers\Api\V1\JobSeeker;
 use App\Http\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Support\Base64Image;
+use App\Support\Identifier;
 use App\Support\IndustryType;
 use App\Support\ProfileCompletion;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class JobSeekerProfileController extends Controller
 {
@@ -28,6 +32,7 @@ class JobSeekerProfileController extends Controller
         $user = $request->user();
         $data = $profile->toArray();
         $data['profile_completion_percent'] = ProfileCompletion::seekerPercent($user, $profile);
+        $this->mergeContactFromUser($data, $user);
 
         return $this->ok($data);
     }
@@ -65,10 +70,19 @@ class JobSeekerProfileController extends Controller
             'profile_photo_url' => ['nullable', 'url', 'max:500'],
             /** Raw base64 image (Flutter); stored as public file, sets `profile_photo_url`. */
             'profile_photo' => ['nullable', 'string', 'max:3500000'],
+            'email' => ['sometimes', 'nullable', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($request->user()->id)],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:32'],
         ]);
 
         $photoB64 = $validated['profile_photo'] ?? null;
         unset($validated['profile_photo']);
+
+        $user = $request->user();
+        $hasEmailKey = array_key_exists('email', $validated);
+        $hasPhoneKey = array_key_exists('phone', $validated);
+        $emailIn = $hasEmailKey ? ($validated['email'] ?? null) : null;
+        $phoneIn = $hasPhoneKey ? ($validated['phone'] ?? null) : null;
+        unset($validated['email'], $validated['phone']);
 
         $profile->fill($validated);
 
@@ -88,12 +102,72 @@ class JobSeekerProfileController extends Controller
 
         $profile->save();
 
+        if ($hasEmailKey || $hasPhoneKey) {
+            $this->applyUserContactUpdates($user, $emailIn, $phoneIn);
+        }
+
         $fresh = $profile->fresh();
-        $user = $request->user();
+        $user->refresh();
         $data = $fresh->toArray();
         $data['profile_completion_percent'] = ProfileCompletion::seekerPercent($user, $fresh);
+        $this->mergeContactFromUser($data, $user);
 
         return $this->ok($data, 'Profile updated.');
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function mergeContactFromUser(array &$data, User $user): void
+    {
+        $data['email'] = Identifier::isSyntheticEmail($user->email) ? null : $user->email;
+        $data['phone'] = $user->phone;
+    }
+
+    private function applyUserContactUpdates(User $user, mixed $emailIn, mixed $phoneIn): void
+    {
+        $dirty = false;
+
+        if ($emailIn !== null) {
+            $trim = is_string($emailIn) ? trim($emailIn) : '';
+            if ($trim === '') {
+                if (filled($user->phone)) {
+                    $digits = preg_replace('/\D/', '', (string) $user->phone) ?? '';
+                    if ($digits !== '') {
+                        $user->email = Identifier::syntheticEmailFromPhone($digits);
+                        $dirty = true;
+                    }
+                }
+            } else {
+                $user->email = strtolower($trim);
+                $dirty = true;
+            }
+        }
+
+        if ($phoneIn !== null) {
+            $raw = is_string($phoneIn) ? $phoneIn : '';
+            $digits = preg_replace('/\D/', '', $raw) ?? '';
+            $newPhone = $digits !== '' ? $digits : null;
+            if ($newPhone !== $user->phone) {
+                if ($newPhone !== null && User::query()->where('phone', $newPhone)->where('id', '!=', $user->id)->exists()) {
+                    throw ValidationException::withMessages([
+                        'phone' => ['This phone number is already used by another account.'],
+                    ]);
+                }
+                $user->phone = $newPhone;
+                $dirty = true;
+            }
+        }
+
+        if ($dirty) {
+            if (Identifier::isSyntheticEmail($user->email) && filled($user->phone)) {
+                $d = preg_replace('/\D/', '', (string) $user->phone) ?? '';
+                if ($d !== '') {
+                    $user->email = Identifier::syntheticEmailFromPhone($d);
+                }
+            }
+            $user->save();
+        }
     }
 
     public function uploadResumePdf(Request $request): JsonResponse
@@ -121,6 +195,7 @@ class JobSeekerProfileController extends Controller
         $user = $request->user();
         $data = $fresh->toArray();
         $data['profile_completion_percent'] = ProfileCompletion::seekerPercent($user, $fresh);
+        $this->mergeContactFromUser($data, $user);
 
         return $this->ok($data, 'Resume uploaded.');
     }
