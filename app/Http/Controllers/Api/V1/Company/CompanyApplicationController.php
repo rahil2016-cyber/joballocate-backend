@@ -35,17 +35,8 @@ class CompanyApplicationController extends Controller
                     $query->select('id', 'name', 'email', 'phone')
                         ->with([
                             'jobSeekerProfile' => function ($q): void {
-                                $q->with([
-                                    'primaryResumeDraft' => function ($d): void {
-                                        $d->select(
-                                            'id',
-                                            'user_id',
-                                            'title',
-                                            'template_id',
-                                            'updated_at'
-                                        );
-                                    },
-                                ]);
+                                // Include `content` so employers can render the same in-app resume preview as seekers.
+                                $q->with(['primaryResumeDraft']);
                             },
                         ]);
                 },
@@ -53,6 +44,19 @@ class CompanyApplicationController extends Controller
             ->where('job_post_id', $job->id)
             ->latest('applied_at')
             ->paginate((int) $request->get('per_page', 30));
+
+        foreach ($apps->items() as $application) {
+            $profile = $application->user?->jobSeekerProfile;
+            if ($profile === null) {
+                continue;
+            }
+            if (filled($profile->resume_url)) {
+                $profile->setAttribute('resume_url', $this->absolutePublicUrl($profile->resume_url));
+            }
+            if (filled($profile->profile_photo_url)) {
+                $profile->setAttribute('profile_photo_url', $this->absolutePublicUrl($profile->profile_photo_url));
+            }
+        }
 
         return $this->ok(
             $apps->items(),
@@ -101,5 +105,18 @@ class CompanyApplicationController extends Controller
         $application->save();
 
         return $this->ok($application->fresh()->load('user:id,name,email,phone'), 'Application updated.');
+    }
+
+    private function absolutePublicUrl(string $value): string
+    {
+        $v = trim($value);
+        if ($v === '') {
+            return $value;
+        }
+        if (str_starts_with($v, 'http://') || str_starts_with($v, 'https://') || str_starts_with($v, '//')) {
+            return str_starts_with($v, '//') ? 'https:'.$v : $v;
+        }
+
+        return url('/'.ltrim($v, '/'));
     }
 }
