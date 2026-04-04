@@ -116,6 +116,7 @@ Route::prefix('v1')->group(function () {
             Route::get('companies/{companyId}', [AdminCompanyController::class, 'show'])->whereNumber('companyId');
             Route::patch('companies/{companyId}/verification', [AdminCompanyController::class, 'updateVerification'])->whereNumber('companyId');
             Route::patch('companies/{companyId}/owner-status', [AdminCompanyController::class, 'updateOwnerStatus'])->whereNumber('companyId');
+            Route::patch('companies/{companyId}/top-company', [AdminCompanyController::class, 'updateTopCompany'])->whereNumber('companyId');
             Route::get('applications', [AdminApplicationController::class, 'index']);
             Route::get('applications/{application}', [AdminApplicationController::class, 'show'])->whereNumber('application');
             Route::patch('applications/{application}', [AdminApplicationController::class, 'update'])->whereNumber('application');

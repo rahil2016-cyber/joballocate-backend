@@ -15,7 +15,7 @@ class PublicTopCompaniesController extends Controller
 {
     use ApiResponses;
 
-    /** Verified companies with at least one published job, ordered by open role count. */
+    /** Verified companies with open roles; admin “spotlight” first, then by open role count. */
     public function index(Request $request): JsonResponse
     {
         $limit = min(30, max(1, (int) $request->get('limit', 12)));
@@ -31,9 +31,10 @@ class PublicTopCompaniesController extends Controller
                 },
             ])
             ->having('open_jobs_count', '>', 0)
+            ->orderByDesc('is_top_company')
             ->orderByDesc('open_jobs_count')
             ->limit($limit)
-            ->get(['id', 'name', 'slug', 'logo_url']);
+            ->get(['id', 'name', 'slug', 'logo_url', 'is_top_company']);
 
         $data = $rows->map(fn (Company $c) => [
             'id' => $c->id,
@@ -42,6 +43,7 @@ class PublicTopCompaniesController extends Controller
             'logo_url' => $c->logo_url,
             'company_logo_url' => $c->company_logo_url,
             'open_jobs_count' => (int) $c->open_jobs_count,
+            'is_top_company' => (bool) $c->is_top_company,
         ])->values()->all();
 
         return $this->ok($data, 'OK');

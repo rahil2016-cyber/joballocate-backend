@@ -126,4 +126,25 @@ class AdminCompanyController extends Controller
             $validated['is_active'] ? 'Company owner enabled.' : 'Company owner banned.'
         );
     }
+
+    /** Pin company on job seeker home “top companies” carousel (verified + open jobs still required for listing). */
+    public function updateTopCompany(Request $request, int $companyId): JsonResponse
+    {
+        $validated = $request->validate([
+            'is_top_company' => ['required', 'boolean'],
+        ]);
+
+        $company = Company::query()->find($companyId);
+        if (! $company) {
+            return $this->fail('Company not found.', null, 404);
+        }
+
+        $company->is_top_company = (bool) $validated['is_top_company'];
+        $company->save();
+
+        return $this->ok(
+            $company->fresh()->load('owner:id,name,email,phone,is_active'),
+            $company->is_top_company ? 'Company marked as spotlight employer.' : 'Company removed from spotlight.'
+        );
+    }
 }

@@ -32,6 +32,7 @@ class Company extends Model
         'team_members',
         'logo_url',
         'verification_status',
+        'is_top_company',
         'verified_at',
         'rejection_reason',
     ];
@@ -42,6 +43,7 @@ class Company extends Model
             'verified_at' => 'datetime',
             'verification_status' => CompanyVerificationStatus::class,
             'team_members' => 'array',
+            'is_top_company' => 'boolean',
         ];
     }
 

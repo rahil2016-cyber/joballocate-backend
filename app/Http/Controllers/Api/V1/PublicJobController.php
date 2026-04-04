@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\CompanyVerificationStatus;
 use App\Enums\JobPostStatus;
 use App\Http\Concerns\ApiResponses;
 use App\Http\Concerns\TransformsPublicJobPost;
@@ -35,6 +36,14 @@ class PublicJobController extends Controller
             ->withCount('applications')
             ->listed()
             ->latest('published_at');
+
+        $fromTop = filter_var($request->query('from_top_companies', false), FILTER_VALIDATE_BOOLEAN);
+        if ($fromTop) {
+            $q->whereHas('company', function ($cq): void {
+                $cq->where('is_top_company', true)
+                    ->where('verification_status', CompanyVerificationStatus::Verified);
+            });
+        }
 
         if (! empty($validated['search'] ?? null)) {
             $term = '%'.$validated['search'].'%';
