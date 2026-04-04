@@ -47,7 +47,32 @@ final class Base64Image
 
         Storage::disk('public')->put($relativePath, $binary);
 
-        // Always return an absolute URL so mobile clients (and browsers) load images reliably.
-        return asset('storage/'.$relativePath);
+        return self::publicUrlForPublicDiskPath($relativePath);
+    }
+
+    /**
+     * Use /media/... routes where hosts block direct /storage/* (403); otherwise asset('storage/...').
+     *
+     * @param  non-empty-string  $relativePath
+     * @return non-empty-string
+     */
+    public static function publicUrlForPublicDiskPath(string $relativePath): string
+    {
+        $relativePath = ltrim($relativePath, '/');
+        $name = basename($relativePath);
+        if ($name === '' || $name === '.' || $name === '..') {
+            return asset('storage/'.$relativePath);
+        }
+        if (! preg_match('/^[a-zA-Z0-9._-]+$/', $name)) {
+            return asset('storage/'.$relativePath);
+        }
+
+        $folder = explode('/', $relativePath, 2)[0];
+
+        return match ($folder) {
+            'profile-photos' => url('/media/profile-photos/'.$name),
+            'company-logos' => url('/media/company-logos/'.$name),
+            default => asset('storage/'.$relativePath),
+        };
     }
 }

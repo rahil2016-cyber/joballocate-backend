@@ -45,3 +45,39 @@ Route::get('/media/resumes/{file}', function (string $file) {
         'Cache-Control' => 'public, max-age=3600',
     ]);
 })->where('file', '[a-zA-Z0-9._-]+');
+
+/*
+| Job seeker profile photos & company logos: same 403 issue as banner-ads when /storage is blocked.
+| Stream from storage/app/public/profile-photos and company-logos.
+*/
+Route::get('/media/profile-photos/{file}', function (string $file) {
+    $file = basename($file);
+    if ($file === '' || ! preg_match('/^[a-zA-Z0-9._-]+$/', $file)) {
+        abort(404);
+    }
+
+    $path = 'profile-photos/'.$file;
+    if (! Storage::disk('public')->exists($path)) {
+        abort(404);
+    }
+
+    return Storage::disk('public')->response($path, null, [
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+})->where('file', '[a-zA-Z0-9._-]+');
+
+Route::get('/media/company-logos/{file}', function (string $file) {
+    $file = basename($file);
+    if ($file === '' || ! preg_match('/^[a-zA-Z0-9._-]+$/', $file)) {
+        abort(404);
+    }
+
+    $path = 'company-logos/'.$file;
+    if (! Storage::disk('public')->exists($path)) {
+        abort(404);
+    }
+
+    return Storage::disk('public')->response($path, null, [
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+})->where('file', '[a-zA-Z0-9._-]+');
