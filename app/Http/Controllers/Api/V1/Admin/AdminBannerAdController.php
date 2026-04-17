@@ -20,6 +20,7 @@ class AdminBannerAdController extends Controller
     {
         $validated = $request->validate([
             'status' => ['nullable', Rule::in(['draft', 'active', 'paused'])],
+            'audience' => ['nullable', Rule::in(['all', 'job_seeker', 'employer'])],
             'search' => ['nullable', 'string', 'max:120'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
@@ -31,6 +32,9 @@ class AdminBannerAdController extends Controller
 
         if (! empty($validated['status'] ?? null)) {
             $q->where('status', $validated['status']);
+        }
+        if (! empty($validated['audience'] ?? null)) {
+            $q->where('audience', $validated['audience']);
         }
         if (! empty($validated['search'] ?? null)) {
             $term = '%'.$validated['search'].'%';
@@ -78,6 +82,7 @@ class AdminBannerAdController extends Controller
             'background_color' => $validated['background_color'] ?? null,
             'image_path' => $imagePath,
             'status' => $status,
+            'audience' => $validated['audience'] ?? 'all',
             'starts_at' => $startsAt,
             'expires_at' => $validated['expires_at'] ?? null,
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
@@ -103,7 +108,7 @@ class AdminBannerAdController extends Controller
             $row->image_path = $this->storeOptimizedImage($request->file('image'));
         }
 
-        foreach (['title', 'content', 'target_url', 'background_color', 'starts_at', 'expires_at', 'sort_order'] as $f) {
+        foreach (['title', 'content', 'target_url', 'background_color', 'audience', 'starts_at', 'expires_at', 'sort_order'] as $f) {
             if (array_key_exists($f, $validated)) {
                 $row->{$f} = $validated[$f];
             }
@@ -171,6 +176,7 @@ class AdminBannerAdController extends Controller
             'content' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'target_url' => ['sometimes', 'nullable', 'url', 'max:500'],
             'background_color' => ['sometimes', 'nullable', 'regex:/^#?[0-9a-fA-F]{3,8}$/'],
+            'audience' => ['sometimes', 'nullable', Rule::in(['all', 'job_seeker', 'employer'])],
             'starts_at' => ['sometimes', 'nullable', 'date'],
             'expires_at' => ['sometimes', 'nullable', 'date', 'after:starts_at'],
             'sort_order' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:10000'],
@@ -239,6 +245,7 @@ class AdminBannerAdController extends Controller
             'image_path' => $b->image_path,
             'image_url' => $b->publicImageUrl(),
             'status' => $b->status,
+            'audience' => $b->audience ?? 'all',
             'starts_at' => $b->starts_at?->toIso8601String(),
             'expires_at' => $b->expires_at?->toIso8601String(),
             'sort_order' => $b->sort_order,

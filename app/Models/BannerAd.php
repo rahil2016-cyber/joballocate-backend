@@ -14,6 +14,8 @@ class BannerAd extends Model
         'background_color',
         'image_path',
         'status',
+        /** @var string all|job_seeker|employer */
+        'audience',
         'starts_at',
         'expires_at',
         'sort_order',
