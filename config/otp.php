@@ -12,7 +12,9 @@ return [
     |
     */
 
-    'expose_code_in_response' => env('OTP_EXPOSE_CODE', false),
+    'expose_code_in_response' => env('OTP_EXPOSE_CODE') !== null
+        ? filter_var(env('OTP_EXPOSE_CODE'), FILTER_VALIDATE_BOOL)
+        : env('APP_ENV') !== 'production',
 
     /*
     |--------------------------------------------------------------------------
@@ -37,7 +39,7 @@ return [
 
     'use_fixed_code' => env('OTP_USE_FIXED_CODE') !== null
         ? filter_var(env('OTP_USE_FIXED_CODE'), FILTER_VALIDATE_BOOL)
-        : env('APP_ENV') === 'local',
+        : env('APP_ENV') !== 'production',
 
     'fixed_code' => env('OTP_FIXED_CODE', '123456'),
 

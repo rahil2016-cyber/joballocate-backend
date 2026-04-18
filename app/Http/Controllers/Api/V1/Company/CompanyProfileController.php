@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Api\V1\Company;
 use App\Http\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Support\Base64Image;
-use App\Support\IndustryType;
+use App\Models\IndustryType;
 use App\Support\ProfileCompletion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class CompanyProfileController extends Controller
 {
@@ -39,9 +40,12 @@ class CompanyProfileController extends Controller
 
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:160'],
+            'company_kind' => ['sometimes', Rule::in(['company', 'consultancy'])],
             'industry' => ['nullable', 'string', 'max:120'],
-            'industry_type' => IndustryType::rule(),
+            'industry_type' => IndustryType::validationRule(),
             'website' => ['nullable', 'string', 'max:255'],
+            'consultancy_hiring_for' => ['nullable', 'string', 'max:160'],
+            'hide_hiring_company' => ['sometimes', 'boolean'],
             'description' => ['nullable', 'string', 'max:5000'],
             'gst_number' => ['nullable', 'string', 'max:32'],
             'location' => ['nullable', 'string', 'max:255'],

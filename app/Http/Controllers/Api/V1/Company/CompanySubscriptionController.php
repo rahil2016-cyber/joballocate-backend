@@ -335,6 +335,7 @@ class CompanySubscriptionController extends Controller
             'is_free' => $payment->is_free,
             'amount_inr' => (int) $payment->amount_inr,
             'applied_coupon_code' => $appliedCoupon?->code,
+            'purchased_at' => $payment->purchased_at?->toISOString(),
             'message' => $isFree ? '1st month activated for free.' : 'Subscription month purchased successfully.',
         ]);
     }
@@ -347,6 +348,7 @@ class CompanySubscriptionController extends Controller
         }
 
         $rows = CompanySubscriptionPayment::query()
+            ->with('package:id,title')
             ->where('company_id', $company->id)
             ->orderByDesc('id')
             ->limit(60)
@@ -359,6 +361,7 @@ class CompanySubscriptionController extends Controller
                 'coupon_code_used' => $p->coupon_code_used,
                 'purchased_at' => $p->purchased_at?->toISOString(),
                 'package_id' => $p->company_subscription_package_id,
+                'package_title' => $p->package?->title,
             ])
             ->values()
             ->all();

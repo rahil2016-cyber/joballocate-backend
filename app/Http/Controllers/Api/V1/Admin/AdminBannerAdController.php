@@ -78,6 +78,7 @@ class AdminBannerAdController extends Controller
         $row = BannerAd::query()->create([
             'title' => $validated['title'],
             'content' => $validated['content'] ?? null,
+            'below_line' => $validated['below_line'] ?? null,
             'target_url' => $validated['target_url'] ?? null,
             'background_color' => $validated['background_color'] ?? null,
             'image_path' => $imagePath,
@@ -108,7 +109,7 @@ class AdminBannerAdController extends Controller
             $row->image_path = $this->storeOptimizedImage($request->file('image'));
         }
 
-        foreach (['title', 'content', 'target_url', 'background_color', 'audience', 'starts_at', 'expires_at', 'sort_order'] as $f) {
+        foreach (['title', 'content', 'below_line', 'target_url', 'background_color', 'audience', 'starts_at', 'expires_at', 'sort_order'] as $f) {
             if (array_key_exists($f, $validated)) {
                 $row->{$f} = $validated[$f];
             }
@@ -174,6 +175,7 @@ class AdminBannerAdController extends Controller
         return $request->validate([
             'title' => $titleRule,
             'content' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'below_line' => ['sometimes', 'nullable', 'string', 'max:500'],
             'target_url' => ['sometimes', 'nullable', 'url', 'max:500'],
             'background_color' => ['sometimes', 'nullable', 'regex:/^#?[0-9a-fA-F]{3,8}$/'],
             'audience' => ['sometimes', 'nullable', Rule::in(['all', 'job_seeker', 'employer'])],
@@ -240,6 +242,7 @@ class AdminBannerAdController extends Controller
             'id' => $b->id,
             'title' => $b->title,
             'content' => $b->content,
+            'below_line' => $b->below_line,
             'target_url' => $b->target_url,
             'background_color' => $b->background_color,
             'image_path' => $b->image_path,

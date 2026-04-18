@@ -6,7 +6,7 @@ use App\Http\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Support\Base64Image;
 use App\Support\Identifier;
-use App\Support\IndustryType;
+use App\Models\IndustryType;
 use App\Support\ProfileCompletion;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -64,7 +64,7 @@ class JobSeekerProfileController extends Controller
             'country' => ['nullable', 'string', 'max:120'],
             'state' => ['nullable', 'string', 'max:120'],
             'district' => ['nullable', 'string', 'max:120'],
-            'industry_type' => IndustryType::rule(),
+            'industry_type' => IndustryType::validationRule(),
             'date_of_birth' => ['nullable', 'date'],
             'resume_url' => ['nullable', 'url', 'max:500'],
             'profile_photo_url' => ['nullable', 'url', 'max:500'],

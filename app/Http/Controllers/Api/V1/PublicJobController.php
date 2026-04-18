@@ -8,7 +8,7 @@ use App\Http\Concerns\ApiResponses;
 use App\Http\Concerns\TransformsPublicJobPost;
 use App\Http\Controllers\Controller;
 use App\Models\JobPost;
-use App\Support\IndustryType;
+use App\Models\IndustryType;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,7 +25,7 @@ class PublicJobController extends Controller
         $validated = $request->validate([
             'search' => ['sometimes', 'string', 'max:200'],
             'location' => ['sometimes', 'string', 'max:120'],
-            'industry_type' => IndustryType::rule(),
+            'industry_type' => IndustryType::validationRule(),
             'company_id' => ['sometimes', 'integer', 'exists:companies,id'],
             'published_after' => ['sometimes', 'string', 'max:40'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:50'],

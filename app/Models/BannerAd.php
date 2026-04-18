@@ -10,6 +10,7 @@ class BannerAd extends Model
     protected $fillable = [
         'title',
         'content',
+        'below_line',
         'target_url',
         'background_color',
         'image_path',

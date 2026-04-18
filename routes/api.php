@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\AdminJobPostController;
 use App\Http\Controllers\Api\V1\Admin\AdminApplicationController;
 use App\Http\Controllers\Api\V1\Admin\AdminAnalyticsController;
+use App\Http\Controllers\Api\V1\Admin\AdminIndustryTypeController;
 use App\Http\Controllers\Api\V1\Admin\AdminBannerAdController;
 use App\Http\Controllers\Api\V1\Admin\AdminPurchaseController;
 use App\Http\Controllers\Api\V1\Admin\AdminCareerContentController;
@@ -32,6 +33,7 @@ use App\Http\Controllers\Api\V1\JobSeeker\SeekerApplicationController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerJobDiscoveryController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerSavedJobController;
 use App\Http\Controllers\Api\V1\MeController;
+use App\Http\Controllers\Api\V1\PublicIndustryTypeController;
 use App\Http\Controllers\Api\V1\PublicBannerController;
 use App\Http\Controllers\Api\V1\PublicTopCompaniesController;
 use App\Http\Controllers\Api\V1\PublicLocationController;
@@ -43,6 +45,7 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/send-otp', [AuthController::class, 'sendOtp'])->middleware('throttle:20,1');
     Route::post('auth/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:30,1');
 
+    Route::get('industry-types', [PublicIndustryTypeController::class, 'index']);
     Route::get('jobs', [PublicJobController::class, 'index']);
     Route::get('jobs/{id}', [PublicJobController::class, 'show'])->whereNumber('id');
     Route::get('companies/top', [PublicTopCompaniesController::class, 'index']);
@@ -141,6 +144,11 @@ Route::prefix('v1')->group(function () {
             Route::get('analytics/job-seekers', [AdminAnalyticsController::class, 'seekerUsage']);
             Route::get('settings/moderation', [AdminSettingController::class, 'showModeration']);
             Route::patch('settings/moderation', [AdminSettingController::class, 'updateModeration']);
+            Route::get('industry-types', [AdminIndustryTypeController::class, 'index']);
+            Route::post('industry-types', [AdminIndustryTypeController::class, 'store']);
+            Route::patch('industry-types/{id}', [AdminIndustryTypeController::class, 'update'])->whereNumber('id');
+            Route::delete('industry-types/{id}', [AdminIndustryTypeController::class, 'destroy'])->whereNumber('id');
+
             Route::get('banner-ads', [AdminBannerAdController::class, 'index']);
             Route::post('banner-ads', [AdminBannerAdController::class, 'store']);
             Route::patch('banner-ads/{bannerId}', [AdminBannerAdController::class, 'update'])->whereNumber('bannerId');

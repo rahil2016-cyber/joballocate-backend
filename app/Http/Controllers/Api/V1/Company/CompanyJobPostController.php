@@ -7,7 +7,7 @@ use App\Http\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Models\JobPost;
 use App\Services\JobPublishingService;
-use App\Support\IndustryType;
+use App\Models\IndustryType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -60,7 +60,7 @@ class CompanyJobPostController extends Controller
             'location' => ['nullable', 'string', 'max:200'],
             'employment_type' => ['nullable', 'string', 'max:64'],
             'experience_level' => ['nullable', 'string', 'max:64'],
-            'industry_type' => IndustryType::rule(),
+            'industry_type' => IndustryType::validationRule(),
             'salary_min' => ['nullable', 'integer', 'min:0'],
             'salary_max' => ['nullable', 'integer', 'min:0'],
             'currency' => ['nullable', 'string', 'max:8'],
@@ -123,7 +123,7 @@ class CompanyJobPostController extends Controller
             'location' => ['nullable', 'string', 'max:200'],
             'employment_type' => ['nullable', 'string', 'max:64'],
             'experience_level' => ['nullable', 'string', 'max:64'],
-            'industry_type' => IndustryType::rule(),
+            'industry_type' => IndustryType::validationRule(),
             'salary_min' => ['nullable', 'integer', 'min:0'],
             'salary_max' => ['nullable', 'integer', 'min:0'],
             'currency' => ['nullable', 'string', 'max:8'],

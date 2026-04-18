@@ -16,10 +16,13 @@ class Company extends Model
     protected $fillable = [
         'user_id',
         'name',
+        'company_kind',
         'slug',
         'industry',
         'industry_type',
         'website',
+        'consultancy_hiring_for',
+        'hide_hiring_company',
         'description',
         'gst_number',
         'location',
@@ -44,6 +47,7 @@ class Company extends Model
             'verification_status' => CompanyVerificationStatus::class,
             'team_members' => 'array',
             'is_top_company' => 'boolean',
+            'hide_hiring_company' => 'boolean',
         ];
     }
 

@@ -34,5 +34,10 @@ class CompanySubscriptionPayment extends Model
     {
         return $this->belongsTo(Company::class);
     }
+
+    public function package(): BelongsTo
+    {
+        return $this->belongsTo(CompanySubscriptionPackage::class, 'company_subscription_package_id');
+    }
 }
 

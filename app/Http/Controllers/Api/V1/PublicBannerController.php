@@ -45,6 +45,7 @@ class PublicBannerController extends Controller
                 'id' => $b->id,
                 'title' => $b->title,
                 'content' => $b->content,
+                'below_line' => $b->below_line,
                 'target_url' => $b->target_url,
                 'background_color' => $b->background_color,
                 'image_url' => $b->publicImageUrl(),
