@@ -3,9 +3,17 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+$adminSpaIndexPath = resource_path('views/index.html');
+
+$serveAdminSpa = static function () use ($adminSpaIndexPath) {
+    if (! is_file($adminSpaIndexPath)) {
+        abort(503, 'Admin front-end is not deployed (missing resources/views/index.html).');
+    }
+
+    return response()->file($adminSpaIndexPath);
+};
+
+Route::get('/', $serveAdminSpa);
 
 /*
 | Banner images: many hosts return 403 for /storage/* (permissions, nginx rules, missing symlink).
@@ -81,3 +89,10 @@ Route::get('/media/company-logos/{file}', function (string $file) {
         'Cache-Control' => 'public, max-age=86400',
     ]);
 })->where('file', '[a-zA-Z0-9._-]+');
+
+/*
+| Admin SPA deep links (/login, /dashboard, …): must be registered after /media/* so
+| those paths are not swallowed. /api/* is registered earlier (see bootstrap/app.php).
+| /assets/* is normally served as static files from public/assets.
+*/
+Route::get('/{any}', $serveAdminSpa)->where('any', '.*');
