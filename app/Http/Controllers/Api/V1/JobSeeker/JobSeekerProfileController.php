@@ -31,6 +31,7 @@ class JobSeekerProfileController extends Controller
 
         $user = $request->user();
         $data = $profile->toArray();
+        $this->appendMobileAliases($data);
         $data['profile_completion_percent'] = ProfileCompletion::seekerPercent($user, $profile);
         $this->mergeContactFromUser($data, $user);
 
@@ -66,6 +67,21 @@ class JobSeekerProfileController extends Controller
             'district' => ['nullable', 'string', 'max:120'],
             'industry_type' => IndustryType::validationRule(),
             'date_of_birth' => ['nullable', 'date'],
+            // Mobile app currently sends `dob`; normalize into `date_of_birth`.
+            'dob' => ['nullable', 'date'],
+            'gender' => ['nullable', 'string', Rule::in(['Male', 'Female', 'Prefer not to say'])],
+            'portfolio_url' => ['nullable', 'url', 'max:500'],
+            'internships' => ['nullable', 'array', 'max:50'],
+            'internships.*.organization' => ['nullable', 'string', 'max:200'],
+            'internships.*.role' => ['nullable', 'string', 'max:200'],
+            'internships.*.duration' => ['nullable', 'string', 'max:120'],
+            'internships.*.description' => ['nullable', 'string', 'max:5000'],
+            'projects' => ['nullable', 'array', 'max:50'],
+            'projects.*.title' => ['nullable', 'string', 'max:200'],
+            'projects.*.link' => ['nullable', 'url', 'max:500'],
+            'projects.*.description' => ['nullable', 'string', 'max:5000'],
+            'achievements' => ['nullable', 'array', 'max:100'],
+            'achievements.*' => ['string', 'max:300'],
             'resume_url' => ['nullable', 'url', 'max:500'],
             'profile_photo_url' => ['nullable', 'url', 'max:500'],
             /** Raw base64 image (Flutter); stored as public file, sets `profile_photo_url`. */
@@ -76,6 +92,11 @@ class JobSeekerProfileController extends Controller
 
         $photoB64 = $validated['profile_photo'] ?? null;
         unset($validated['profile_photo']);
+
+        if (array_key_exists('dob', $validated) && ! array_key_exists('date_of_birth', $validated)) {
+            $validated['date_of_birth'] = $validated['dob'];
+        }
+        unset($validated['dob']);
 
         $user = $request->user();
         $hasEmailKey = array_key_exists('email', $validated);
@@ -109,6 +130,7 @@ class JobSeekerProfileController extends Controller
         $fresh = $profile->fresh();
         $user->refresh();
         $data = $fresh->toArray();
+        $this->appendMobileAliases($data);
         $data['profile_completion_percent'] = ProfileCompletion::seekerPercent($user, $fresh);
         $this->mergeContactFromUser($data, $user);
 
@@ -122,6 +144,15 @@ class JobSeekerProfileController extends Controller
     {
         $data['email'] = Identifier::isSyntheticEmail($user->email) ? null : $user->email;
         $data['phone'] = $user->phone;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function appendMobileAliases(array &$data): void
+    {
+        // Keep backward compatibility with existing Flutter payload/field names.
+        $data['dob'] = $data['date_of_birth'] ?? null;
     }
 
     private function applyUserContactUpdates(User $user, mixed $emailIn, mixed $phoneIn): void
@@ -194,6 +225,7 @@ class JobSeekerProfileController extends Controller
         $fresh = $profile->fresh();
         $user = $request->user();
         $data = $fresh->toArray();
+        $this->appendMobileAliases($data);
         $data['profile_completion_percent'] = ProfileCompletion::seekerPercent($user, $fresh);
         $this->mergeContactFromUser($data, $user);
 
