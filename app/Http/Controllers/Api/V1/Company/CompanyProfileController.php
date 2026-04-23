@@ -55,6 +55,8 @@ class CompanyProfileController extends Controller
             'established_year' => ['nullable', 'integer', 'min:1800', 'max:'.(int) date('Y')],
             'company_bio' => ['nullable', 'string', 'max:10000'],
             'what_we_do' => ['nullable', 'string', 'max:5000'],
+            'benefits' => ['nullable', 'string', 'max:10000'],
+            'salary_insights' => ['nullable', 'string', 'max:10000'],
             'team_members' => ['nullable', 'array', 'max:40'],
             'team_members.*.name' => ['required', 'string', 'max:120'],
             'team_members.*.role' => ['nullable', 'string', 'max:120'],

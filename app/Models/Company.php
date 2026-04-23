@@ -32,6 +32,8 @@ class Company extends Model
         'established_year',
         'company_bio',
         'what_we_do',
+        'benefits',
+        'salary_insights',
         'team_members',
         'logo_url',
         'verification_status',

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\PrivacyController;
 
 $adminSpaIndexPath = resource_path('views/index.html');
 
@@ -14,6 +15,9 @@ $serveAdminSpa = static function () use ($adminSpaIndexPath) {
 };
 
 Route::get('/', $serveAdminSpa);
+Route::get('/privacy', [PrivacyController::class, 'show'])->name('privacy.show');
+Route::post('/privacy/account-deletion-request', [PrivacyController::class, 'submitDeletionRequest'])
+    ->name('privacy.account-deletion-request');
 
 /*
 | Banner images: many hosts return 403 for /storage/* (permissions, nginx rules, missing symlink).
