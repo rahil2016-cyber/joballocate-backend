@@ -25,4 +25,40 @@ class PublicIndustryTypeController extends Controller
 
         return $this->ok($data);
     }
+
+    /**
+     * Tiles for the job seeker app “Popular categories” strip (admin-configured).
+     * Includes rows with {@see IndustryType::$show_on_seeker_home}; may include
+     * inactive keys used only for keyword browse (no job posts use that key).
+     */
+    public function seekerHomePopular(): JsonResponse
+    {
+        $rows = IndustryType::query()
+            ->where('show_on_seeker_home', true)
+            ->orderBy('seeker_home_sort_order')
+            ->orderBy('label')
+            ->get([
+                'key',
+                'label',
+                'seeker_home_icon',
+                'seeker_home_search',
+                'seeker_home_accent_dot',
+            ]);
+
+        $data = $rows->map(function (IndustryType $r) {
+            $search = $r->seeker_home_search;
+            $search = is_string($search) && $search !== '' ? $search : null;
+            $useIndustry = $search === null;
+
+            return [
+                'label' => $r->label,
+                'industry_type' => $useIndustry ? $r->key : null,
+                'search' => $search,
+                'icon' => $r->seeker_home_icon,
+                'accent_dot' => (bool) $r->seeker_home_accent_dot,
+            ];
+        })->values()->all();
+
+        return $this->ok($data);
+    }
 }

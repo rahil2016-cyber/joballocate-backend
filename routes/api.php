@@ -47,6 +47,7 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:30,1');
 
     Route::get('industry-types', [PublicIndustryTypeController::class, 'index']);
+    Route::get('seeker-home-popular-categories', [PublicIndustryTypeController::class, 'seekerHomePopular']);
     Route::get('jobs', [PublicJobController::class, 'index']);
     Route::get('jobs/{id}', [PublicJobController::class, 'show'])->whereNumber('id');
     Route::get('companies/top', [PublicTopCompaniesController::class, 'index']);

@@ -13,6 +13,11 @@ class IndustryType extends Model
         'label',
         'sort_order',
         'is_active',
+        'show_on_seeker_home',
+        'seeker_home_sort_order',
+        'seeker_home_icon',
+        'seeker_home_search',
+        'seeker_home_accent_dot',
     ];
 
     protected function casts(): array
@@ -20,6 +25,9 @@ class IndustryType extends Model
         return [
             'is_active' => 'boolean',
             'sort_order' => 'integer',
+            'show_on_seeker_home' => 'boolean',
+            'seeker_home_sort_order' => 'integer',
+            'seeker_home_accent_dot' => 'boolean',
         ];
     }
 

@@ -59,6 +59,11 @@ class AdminIndustryTypeController extends Controller
             'label' => ['required', 'string', 'max:160'],
             'sort_order' => ['sometimes', 'integer', 'min:0', 'max:100000'],
             'is_active' => ['sometimes', 'boolean'],
+            'show_on_seeker_home' => ['sometimes', 'boolean'],
+            'seeker_home_sort_order' => ['sometimes', 'integer', 'min:0', 'max:100000'],
+            'seeker_home_icon' => ['nullable', 'string', 'max:64'],
+            'seeker_home_search' => ['nullable', 'string', 'max:200'],
+            'seeker_home_accent_dot' => ['sometimes', 'boolean'],
         ]);
 
         $row = IndustryType::query()->create([
@@ -66,6 +71,11 @@ class AdminIndustryTypeController extends Controller
             'label' => $validated['label'],
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
             'is_active' => (bool) ($validated['is_active'] ?? true),
+            'show_on_seeker_home' => (bool) ($validated['show_on_seeker_home'] ?? false),
+            'seeker_home_sort_order' => (int) ($validated['seeker_home_sort_order'] ?? 0),
+            'seeker_home_icon' => $validated['seeker_home_icon'] ?? null,
+            'seeker_home_search' => $validated['seeker_home_search'] ?? null,
+            'seeker_home_accent_dot' => (bool) ($validated['seeker_home_accent_dot'] ?? false),
         ]);
 
         return $this->ok($this->toRow($row), 'Industry type created.', null, 201);
@@ -82,9 +92,23 @@ class AdminIndustryTypeController extends Controller
             'label' => ['sometimes', 'required', 'string', 'max:160'],
             'sort_order' => ['sometimes', 'integer', 'min:0', 'max:100000'],
             'is_active' => ['sometimes', 'boolean'],
+            'show_on_seeker_home' => ['sometimes', 'boolean'],
+            'seeker_home_sort_order' => ['sometimes', 'integer', 'min:0', 'max:100000'],
+            'seeker_home_icon' => ['nullable', 'string', 'max:64'],
+            'seeker_home_search' => ['nullable', 'string', 'max:200'],
+            'seeker_home_accent_dot' => ['sometimes', 'boolean'],
         ]);
 
-        foreach (['label', 'sort_order', 'is_active'] as $f) {
+        foreach ([
+            'label',
+            'sort_order',
+            'is_active',
+            'show_on_seeker_home',
+            'seeker_home_sort_order',
+            'seeker_home_icon',
+            'seeker_home_search',
+            'seeker_home_accent_dot',
+        ] as $f) {
             if (array_key_exists($f, $validated)) {
                 $row->{$f} = $validated[$f];
             }
@@ -127,6 +151,11 @@ class AdminIndustryTypeController extends Controller
             'label' => $r->label,
             'sort_order' => (int) $r->sort_order,
             'is_active' => (bool) $r->is_active,
+            'show_on_seeker_home' => (bool) ($r->show_on_seeker_home ?? false),
+            'seeker_home_sort_order' => (int) ($r->seeker_home_sort_order ?? 0),
+            'seeker_home_icon' => $r->seeker_home_icon,
+            'seeker_home_search' => $r->seeker_home_search,
+            'seeker_home_accent_dot' => (bool) ($r->seeker_home_accent_dot ?? false),
             'created_at' => $r->created_at?->toIso8601String(),
             'updated_at' => $r->updated_at?->toIso8601String(),
         ];
