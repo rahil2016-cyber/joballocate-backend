@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\JobSeeker;
 use App\Http\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Models\ResumeDraft;
+use App\Support\ResumeHtmlDemoData;
 use App\Support\ResumeViewData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,32 +24,38 @@ class ResumeHtmlPreviewController extends Controller
             'template_key' => ['required', 'string', 'max:64', Rule::in(self::TEMPLATE_KEYS)],
             'content' => ['nullable', 'array'],
             'resume_draft_id' => ['nullable', 'integer', 'exists:resume_drafts,id'],
+            'demo_variant' => ['nullable', 'integer', Rule::in([0, 1, 2, 3])],
         ]);
 
         $user = $request->user();
         $profile = $user->jobSeekerProfile;
 
-        $envelope = $validated['content'] ?? null;
-        if ($envelope === null && ! empty($validated['resume_draft_id'])) {
-            $draft = ResumeDraft::query()
-                ->where('id', $validated['resume_draft_id'])
-                ->where('user_id', $user->id)
-                ->first();
-            if (! $draft) {
-                return $this->fail('Resume draft not found.', null, 404);
+        $demoVariant = $validated['demo_variant'] ?? null;
+        if ($demoVariant !== null) {
+            $resume = ResumeHtmlDemoData::viewProfile((int) $demoVariant);
+        } else {
+            $envelope = $validated['content'] ?? null;
+            if ($envelope === null && ! empty($validated['resume_draft_id'])) {
+                $draft = ResumeDraft::query()
+                    ->where('id', $validated['resume_draft_id'])
+                    ->where('user_id', $user->id)
+                    ->first();
+                if (! $draft) {
+                    return $this->fail('Resume draft not found.', null, 404);
+                }
+                $envelope = is_array($draft->content) ? $draft->content : null;
             }
-            $envelope = is_array($draft->content) ? $draft->content : null;
-        }
 
-        if ($envelope === null && $profile?->resume_document !== null) {
-            $envelope = is_array($profile->resume_document) ? $profile->resume_document : null;
-        }
+            if ($envelope === null && $profile?->resume_document !== null) {
+                $envelope = is_array($profile->resume_document) ? $profile->resume_document : null;
+            }
 
-        if ($envelope === null) {
-            $envelope = ['schema' => 'resume_model_v1', 'version' => 1, 'data' => []];
-        }
+            if ($envelope === null) {
+                $envelope = ['schema' => 'resume_model_v1', 'version' => 1, 'data' => []];
+            }
 
-        $resume = ResumeViewData::fromEnvelope($envelope, $user, $profile);
+            $resume = ResumeViewData::fromEnvelope($envelope, $user, $profile);
+        }
         $key = $validated['template_key'];
         $viewName = 'resume.html.'.$key;
 
