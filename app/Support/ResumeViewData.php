@@ -47,6 +47,7 @@ final class ResumeViewData
         if ($summary === '' && $profile !== null) {
             $summary = (string) ($profile->bio ?? '');
         }
+        $summary = ResumeHtmlFormat::plainMultiline($summary);
 
         $skills = self::stringList($data['skills'] ?? null);
         if ($skills === [] && $profile !== null && is_array($profile->skills)) {
@@ -270,7 +271,7 @@ final class ResumeViewData
             $dates = self::str($item['date_range'] ?? null);
             $bullets = self::stringList($item['bullets'] ?? null);
             $body = implode("\n", $bullets);
-            if ($heading === '' && $dates === '' && $body === '') {
+            if (! ResumeHtmlFormat::experienceBlockVisible($heading, $dates, $body)) {
                 continue;
             }
             $out[] = ['heading' => $heading, 'dates' => $dates, 'body' => $body];
