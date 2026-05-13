@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\V1\Company\CompanySubscriptionController;
 use App\Http\Controllers\Api\V1\JobSeeker\JobSeekerPackageController;
 use App\Http\Controllers\Api\V1\JobSeeker\JobSeekerProfileController;
 use App\Http\Controllers\Api\V1\JobSeeker\ResumeDraftController;
+use App\Http\Controllers\Api\V1\JobSeeker\ResumeHtmlPreviewController;
 use App\Http\Controllers\Api\V1\JobSeeker\ResumeAiController;
 use App\Http\Controllers\Api\V1\JobSeeker\ResumePdfPurchaseController;
 use App\Http\Controllers\Api\V1\JobSeeker\SeekerActivityController;
@@ -103,6 +104,8 @@ Route::prefix('v1')->group(function () {
                 ->middleware('throttle:60,1');
             Route::post('resume/save', [ResumeDraftController::class, 'store'])
                 ->middleware('throttle:60,1');
+            Route::post('resume/preview-html', [ResumeHtmlPreviewController::class, 'preview'])
+                ->middleware('throttle:30,1');
             Route::post('career/ai-coach', [SeekerCareerAiController::class, 'coach'])
                 ->middleware('throttle:20,1');
             Route::get('career/contents', [SeekerCareerContentController::class, 'index']);
