@@ -15,7 +15,7 @@ class ResumeHtmlPreviewController extends Controller
 {
     use ApiResponses;
 
-    public const TEMPLATE_KEYS = ['t1_teal_sidebar', 't2_minimal', 't3_bold_navy', 't4_classic_serif', 't5_modern_split'];
+    public const TEMPLATE_KEYS = ['t1_teal_sidebar', 't2_minimal', 't3_bold_navy', 't4_classic_serif', 't5_modern_split', 't6_navy_two_column'];
 
     public function preview(Request $request): JsonResponse
     {
