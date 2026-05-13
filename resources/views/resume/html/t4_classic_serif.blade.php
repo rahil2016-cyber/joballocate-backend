@@ -23,7 +23,7 @@
     <h2>Education</h2>
     <ul>
         @foreach($resume['education_list'] as $ed)
-            <li><strong>{{ e($ed['title']) }}</strong>, {{ e($ed['institution']) }}, {{ e($ed['year']) }}{{ $ed['marks'] ? ', '.$ed['marks'] : '' }}</li>
+            <li><strong>{{ e($ed['title']) }}</strong>, {{ e($ed['institution']) }}, {{ e($ed['year']) }}@if(!empty($ed['marks'])), {{ e($ed['marks']) }}@endif</li>
         @endforeach
         @if(empty($resume['education_list']))
             <li>{{ e($resume['graduation']['course']) }}, {{ e($resume['graduation']['college']) }}</li>
