@@ -11,6 +11,8 @@ use App\Models\JobSeekerProfile;
 use App\Models\User;
 use App\Services\Otp\OtpService;
 use App\Services\PlatformSettingService;
+use App\Services\ReferEarnService;
+use App\Models\AudiencePromoCode;
 use App\Support\Identifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,7 +26,8 @@ class AuthController extends Controller
 
     public function __construct(
         private readonly OtpService $otpService,
-        private readonly PlatformSettingService $settings
+        private readonly PlatformSettingService $settings,
+        private readonly ReferEarnService $referEarn
     ) {}
 
     public function sendOtp(Request $request): JsonResponse
@@ -94,6 +97,7 @@ class AuthController extends Controller
             'state' => [Rule::requiredIf(fn () => $request->input('intent') === 'register'), 'nullable', 'string', 'max:120'],
             'district' => [Rule::requiredIf(fn () => $request->input('intent') === 'register'), 'nullable', 'string', 'max:120'],
             'city' => ['nullable', 'string', 'max:120'],
+            'referral_code' => ['nullable', 'string', 'max:64'],
         ]);
 
         if ($validated['role'] === UserRole::SuperAdmin->value) {
@@ -193,6 +197,23 @@ class AuthController extends Controller
                 'district' => $validated['district'] ?? null,
                 'city' => $validated['city'] ?? null,
             ]);
+        }
+
+        $audience = $validated['role'] === UserRole::Company->value
+            ? AudiencePromoCode::AUDIENCE_COMPANY
+            : AudiencePromoCode::AUDIENCE_JOB_SEEKER;
+
+        if (! empty($validated['referral_code'] ?? null)) {
+            $check = $this->referEarn->validateForRegistration(
+                $validated['referral_code'],
+                $audience
+            );
+            if (! ($check['valid'] ?? false)) {
+                return $this->fail($check['message'] ?? 'Invalid referral code.', null, 422);
+            }
+            $this->referEarn->redeemOnRegistration($user, $validated['referral_code'], $audience);
+        } else {
+            $this->referEarn->ensureUserReferralCode($user);
         }
 
         return $this->issueTokenResponse($user->fresh(), 'Registration successful.');

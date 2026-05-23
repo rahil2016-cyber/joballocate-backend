@@ -11,7 +11,7 @@
         .hero { background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 28px 22px 36px; color: #fff; }
         .hero h1 { margin: 0; font-size: 1.55rem; font-weight: 800; }
         .hero p { margin: 8px 0 0; opacity: .95; font-size: 0.9rem; }
-        .body { margin: 0; background: #1e293b; border-radius: 0; padding: 22px 18px 28px; display: grid; grid-template-columns: 38% 1fr; gap: 18px; }
+        .t5-columns { margin: 0; background: #1e293b; border-radius: 0; padding: 22px 18px 28px; display: grid; grid-template-columns: 38% 1fr; gap: 18px; width: 100%; max-width: 100%; }
         .card { background: #334155; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
         .card h3 { margin: 0 0 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: #a5b4fc; }
         ul { margin: 0; padding-left: 16px; font-size: 13px; }
@@ -47,7 +47,7 @@
         <p>{{ e(implode(' · ', $heroLine2)) }}</p>
     @endif
 </div>
-<div class="body">
+<div class="t5-columns">
     <aside>
         @if($skillsShow !== [])
             <div class="card"><h3>Skills</h3><ul>@foreach($skillsShow as $s)<li>{{ e($s) }}</li>@endforeach</ul></div>

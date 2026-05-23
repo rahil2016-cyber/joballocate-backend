@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminPurchaseController;
 use App\Http\Controllers\Api\V1\Admin\AdminCareerContentController;
 use App\Http\Controllers\Api\V1\Admin\AdminSeekerFeedbackController;
 use App\Http\Controllers\Api\V1\Admin\AdminSeekerPackageController;
+use App\Http\Controllers\Api\V1\Admin\AdminReferEarnController;
 use App\Http\Controllers\Api\V1\Admin\AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -39,6 +40,7 @@ use App\Http\Controllers\Api\V1\PublicBannerController;
 use App\Http\Controllers\Api\V1\PublicTopCompaniesController;
 use App\Http\Controllers\Api\V1\PublicLocationController;
 use App\Http\Controllers\Api\V1\PublicJobController;
+use App\Http\Controllers\Api\V1\PublicReferEarnController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -52,6 +54,8 @@ Route::prefix('v1')->group(function () {
     Route::get('jobs/{id}', [PublicJobController::class, 'show'])->whereNumber('id');
     Route::get('companies/top', [PublicTopCompaniesController::class, 'index']);
     Route::get('banners', [PublicBannerController::class, 'index']);
+    Route::get('refer-earn', [PublicReferEarnController::class, 'show']);
+    Route::post('refer-earn/validate', [PublicReferEarnController::class, 'validateCode']);
 
     // Location dropdown data (Full India)
     Route::get('locations/states', [PublicLocationController::class, 'states']);
@@ -148,6 +152,12 @@ Route::prefix('v1')->group(function () {
             Route::get('analytics/job-seekers', [AdminAnalyticsController::class, 'seekerUsage']);
             Route::get('settings/moderation', [AdminSettingController::class, 'showModeration']);
             Route::patch('settings/moderation', [AdminSettingController::class, 'updateModeration']);
+            Route::get('settings/refer-earn', [AdminReferEarnController::class, 'showSettings']);
+            Route::patch('settings/refer-earn', [AdminReferEarnController::class, 'updateSettings']);
+            Route::get('refer-earn/promo-codes', [AdminReferEarnController::class, 'indexPromoCodes']);
+            Route::post('refer-earn/promo-codes', [AdminReferEarnController::class, 'storePromoCode']);
+            Route::patch('refer-earn/promo-codes/{id}', [AdminReferEarnController::class, 'updatePromoCode'])->whereNumber('id');
+            Route::delete('refer-earn/promo-codes/{id}', [AdminReferEarnController::class, 'destroyPromoCode'])->whereNumber('id');
             Route::get('industry-types', [AdminIndustryTypeController::class, 'index']);
             Route::post('industry-types', [AdminIndustryTypeController::class, 'store']);
             Route::patch('industry-types/{id}', [AdminIndustryTypeController::class, 'update'])->whereNumber('id');

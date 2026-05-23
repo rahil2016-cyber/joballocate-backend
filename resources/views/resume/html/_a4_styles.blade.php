@@ -39,7 +39,7 @@ body {
 .a4-doc .side {
     align-self: flex-start;
 }
-.a4-doc .body {
+.a4-doc > .body {
     max-width: 100% !important;
     margin-left: auto !important;
     margin-right: auto !important;
