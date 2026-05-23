@@ -52,6 +52,7 @@ Route::prefix('v1')->group(function () {
     Route::get('seeker-home-popular-categories', [PublicIndustryTypeController::class, 'seekerHomePopular']);
     Route::get('jobs', [PublicJobController::class, 'index']);
     Route::get('jobs/{id}', [PublicJobController::class, 'show'])->whereNumber('id');
+    Route::get('jobs/{id}/share', [PublicJobController::class, 'share'])->whereNumber('id');
     Route::get('companies/top', [PublicTopCompaniesController::class, 'index']);
     Route::get('banners', [PublicBannerController::class, 'index']);
     Route::get('refer-earn', [PublicReferEarnController::class, 'show']);

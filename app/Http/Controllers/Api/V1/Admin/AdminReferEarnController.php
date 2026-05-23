@@ -31,6 +31,8 @@ class AdminReferEarnController extends Controller
             'job_seeker_benefits_text' => ['sometimes', 'string', 'max:5000'],
             'company_benefits_text' => ['sometimes', 'string', 'max:5000'],
             'app_download_url' => ['nullable', 'string', 'max:500'],
+            'deep_link_scheme' => ['sometimes', 'string', 'max:32', 'regex:/^[a-z][a-z0-9+.-]*$/i'],
+            'job_share_web_base_url' => ['nullable', 'string', 'max:500'],
         ]);
 
         $updated = $this->settings->updateReferEarnSettings(

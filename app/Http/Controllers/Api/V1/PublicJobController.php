@@ -9,6 +9,7 @@ use App\Http\Concerns\TransformsPublicJobPost;
 use App\Http\Controllers\Controller;
 use App\Models\JobPost;
 use App\Models\IndustryType;
+use App\Services\JobShareService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,10 @@ class PublicJobController extends Controller
 {
     use ApiResponses;
     use TransformsPublicJobPost;
+
+    public function __construct(
+        private readonly JobShareService $jobShare
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -105,6 +110,27 @@ class PublicJobController extends Controller
             return $this->fail('Job not found.', null, 404);
         }
 
-        return $this->ok($this->transformListedJob($job));
+        $payload = $this->transformListedJob($job);
+        $payload['share'] = $this->jobShare->payloadForJob($job);
+
+        return $this->ok($payload);
+    }
+
+    public function share(int $id): JsonResponse
+    {
+        JobPost::runAutoCloseJobs();
+
+        $job = JobPost::query()
+            ->with('company:id,name,slug,logo_url')
+            ->where('id', $id)
+            ->where('status', JobPostStatus::Published)
+            ->whereNotNull('published_at')
+            ->first();
+
+        if (! $job) {
+            return $this->fail('Job not found or not available to share.', null, 404);
+        }
+
+        return $this->ok($this->jobShare->payloadForJob($job));
     }
 }

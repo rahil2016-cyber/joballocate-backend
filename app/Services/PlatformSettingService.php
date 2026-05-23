@@ -57,11 +57,34 @@ final class PlatformSettingService
      */
     public function referEarnSettings(): array
     {
+        return array_merge(
+            [
+                'job_seeker_enabled' => $this->bool('refer_earn.job_seeker_enabled', true),
+                'company_enabled' => $this->bool('refer_earn.company_enabled', true),
+                'job_seeker_benefits_text' => $this->string('refer_earn.job_seeker_benefits_text', 'Invite friends and earn rewards on packages and resume benefits.'),
+                'company_benefits_text' => $this->string('refer_earn.company_benefits_text', 'Refer other employers and get subscription discounts when they join.'),
+                'app_download_url' => $this->string('refer_earn.app_download_url', ''),
+            ],
+            $this->appLinkSettings()
+        );
+    }
+
+    /**
+     * Deep links and job sharing (Play Store URL is optional; job shares never mention it).
+     *
+     * @return array{
+     *   deep_link_scheme: string,
+     *   job_share_web_base_url: string,
+     *   app_download_url: string
+     * }
+     */
+    public function appLinkSettings(): array
+    {
+        $defaultWeb = rtrim((string) env('APP_URL', 'https://joballocate.tech'), '/');
+
         return [
-            'job_seeker_enabled' => $this->bool('refer_earn.job_seeker_enabled', true),
-            'company_enabled' => $this->bool('refer_earn.company_enabled', true),
-            'job_seeker_benefits_text' => $this->string('refer_earn.job_seeker_benefits_text', 'Invite friends and earn rewards on packages and resume benefits.'),
-            'company_benefits_text' => $this->string('refer_earn.company_benefits_text', 'Refer other employers and get subscription discounts when they join.'),
+            'deep_link_scheme' => $this->string('app_link.deep_link_scheme', 'joballocate'),
+            'job_share_web_base_url' => $this->string('app_link.job_share_web_base_url', $defaultWeb),
             'app_download_url' => $this->string('refer_earn.app_download_url', ''),
         ];
     }
@@ -78,19 +101,21 @@ final class PlatformSettingService
     public function updateReferEarnSettings(array $data, ?int $updatedBy = null): array
     {
         $map = [
-            'job_seeker_enabled' => 'refer_earn.job_seeker_enabled',
-            'company_enabled' => 'refer_earn.company_enabled',
-            'job_seeker_benefits_text' => 'refer_earn.job_seeker_benefits_text',
-            'company_benefits_text' => 'refer_earn.company_benefits_text',
-            'app_download_url' => 'refer_earn.app_download_url',
+            'job_seeker_enabled' => ['refer_earn.job_seeker_enabled', 'bool'],
+            'company_enabled' => ['refer_earn.company_enabled', 'bool'],
+            'job_seeker_benefits_text' => ['refer_earn.job_seeker_benefits_text', 'text'],
+            'company_benefits_text' => ['refer_earn.company_benefits_text', 'text'],
+            'app_download_url' => ['refer_earn.app_download_url', 'text'],
+            'deep_link_scheme' => ['app_link.deep_link_scheme', 'text'],
+            'job_share_web_base_url' => ['app_link.job_share_web_base_url', 'text'],
         ];
 
-        foreach ($map as $field => $key) {
+        foreach ($map as $field => [$key, $type]) {
             if (! array_key_exists($field, $data)) {
                 continue;
             }
             $val = $data[$field];
-            if (str_ends_with($field, '_enabled')) {
+            if ($type === 'bool') {
                 PlatformSetting::query()->updateOrCreate(
                     ['key' => $key],
                     ['value' => ['enabled' => (bool) $val], 'updated_by' => $updatedBy]
