@@ -59,6 +59,7 @@ Route::prefix('v1')->group(function () {
     Route::get('refer-earn', [PublicReferEarnController::class, 'show']);
     Route::post('refer-earn/validate', [PublicReferEarnController::class, 'validateCode']);
     Route::get('resume/demo-profiles', [PublicResumeDemoController::class, 'demoProfiles']);
+    Route::get('resume/demo-preview-html-batch', [PublicResumeDemoController::class, 'demoPreviewHtmlBatch']);
 
     // Location dropdown data (Full India)
     Route::get('locations/states', [PublicLocationController::class, 'states']);
