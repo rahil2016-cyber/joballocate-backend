@@ -111,7 +111,7 @@ Route::prefix('v1')->group(function () {
             Route::post('resume/save', [ResumeDraftController::class, 'store'])
                 ->middleware('throttle:60,1');
             Route::post('resume/preview-html', [ResumeHtmlPreviewController::class, 'preview'])
-                ->middleware('throttle:30,1');
+                ->middleware('throttle:200,1');
             Route::post('career/ai-coach', [SeekerCareerAiController::class, 'coach'])
                 ->middleware('throttle:20,1');
             Route::get('career/contents', [SeekerCareerContentController::class, 'index']);

@@ -64,6 +64,16 @@ body.a4-body--dark {
     margin-top: 0 !important;
     border-radius: 0 !important;
 }
+/* Keep profile photos from blowing up in mobile WebView preview */
+.a4-doc img.photo,
+.a4-doc img.headshot,
+.a4-doc img.rc-photo {
+    max-width: 28mm !important;
+    max-height: 28mm !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: cover !important;
+}
 @media print {
     html, body {
         background: #fff !important;
