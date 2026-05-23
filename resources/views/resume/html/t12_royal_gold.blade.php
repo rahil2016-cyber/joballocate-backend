@@ -32,7 +32,7 @@
     </style>
 </head>
 <body class="a4-body--dark">
-@include('resume.html._resume_setup')
+@php extract(\App\Support\ResumeHtmlViewComposer::data($resume), EXTR_SKIP); @endphp
 @php $showPhotoPlaceholder = true; @endphp
 <div class="a4-doc a4-doc--dark t12">
     <div class="t12-inner">

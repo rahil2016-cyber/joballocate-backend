@@ -1,3 +1,6 @@
+@unless(isset($F))
+    @php extract(\App\Support\ResumeHtmlViewComposer::data($resume ?? [])); @endphp
+@endunless
 @if($summaryPlain !== '')
     <h2 class="rc-h2">Summary</h2>
     <p class="rc-summary">{!! nl2br(e(str_replace(["\r\n", "\r"], "\n", $summaryPlain))) !!}</p>

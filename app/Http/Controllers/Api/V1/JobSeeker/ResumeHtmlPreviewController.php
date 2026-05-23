@@ -6,6 +6,7 @@ use App\Http\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Models\ResumeDraft;
 use App\Support\ResumeHtmlDemoData;
+use App\Support\ResumeHtmlViewComposer;
 use App\Support\ResumeViewData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -76,7 +77,7 @@ class ResumeHtmlPreviewController extends Controller
             return $this->fail('Template not found.', null, 404);
         }
 
-        $html = view($viewName, ['resume' => $resume])->render();
+        $html = view($viewName, ResumeHtmlViewComposer::data($resume))->render();
 
         return $this->ok([
             'html' => $html,

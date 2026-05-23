@@ -31,7 +31,7 @@
     </style>
 </head>
 <body>
-@include('resume.html._resume_setup')
+@php extract(\App\Support\ResumeHtmlViewComposer::data($resume), EXTR_SKIP); @endphp
 @php $showPhotoPlaceholder = true; @endphp
 <div class="a4-doc t7">
     <header class="t7-head">

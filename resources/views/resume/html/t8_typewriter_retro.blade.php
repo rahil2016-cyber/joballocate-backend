@@ -26,7 +26,7 @@
     </style>
 </head>
 <body>
-@include('resume.html._resume_setup')
+@php extract(\App\Support\ResumeHtmlViewComposer::data($resume), EXTR_SKIP); @endphp
 <div class="a4-doc t8">
     <header class="t8-head">
         @if($F::filled($resume['full_name'] ?? null))<h1>{{ e($resume['full_name']) }}</h1>@endif

@@ -1,4 +1,7 @@
 @if(empty($asideSkipPhoto))
+@unless(isset($F))
+    @php extract(\App\Support\ResumeHtmlViewComposer::data($resume ?? [])); @endphp
+@endunless
     @if($F::filled($photoUrl ?? null))
         <img class="rc-photo" src="{{ e($photoUrl) }}" alt="">
     @elseif(!empty($showPhotoPlaceholder))
