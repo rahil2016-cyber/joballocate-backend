@@ -26,6 +26,21 @@ final class ResumeHtmlDemoData
     }
 
     /**
+     * All demo profiles for gallery thumbnails (variant index 0 … VARIANT_COUNT-1).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function allProfiles(): array
+    {
+        $profiles = [];
+        for ($i = 0; $i < self::VARIANT_COUNT; $i++) {
+            $profiles[] = array_merge(['variant' => $i], self::viewProfile($i));
+        }
+
+        return $profiles;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private static function baseShell(

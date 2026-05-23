@@ -41,6 +41,7 @@ use App\Http\Controllers\Api\V1\PublicTopCompaniesController;
 use App\Http\Controllers\Api\V1\PublicLocationController;
 use App\Http\Controllers\Api\V1\PublicJobController;
 use App\Http\Controllers\Api\V1\PublicReferEarnController;
+use App\Http\Controllers\Api\V1\PublicResumeDemoController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -57,6 +58,7 @@ Route::prefix('v1')->group(function () {
     Route::get('banners', [PublicBannerController::class, 'index']);
     Route::get('refer-earn', [PublicReferEarnController::class, 'show']);
     Route::post('refer-earn/validate', [PublicReferEarnController::class, 'validateCode']);
+    Route::get('resume/demo-profiles', [PublicResumeDemoController::class, 'demoProfiles']);
 
     // Location dropdown data (Full India)
     Route::get('locations/states', [PublicLocationController::class, 'states']);
