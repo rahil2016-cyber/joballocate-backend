@@ -72,6 +72,21 @@ class JobSeekerProfileController extends Controller
             'profile_photo' => ['nullable', 'string', 'max:3500000'],
             'email' => ['sometimes', 'nullable', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($request->user()->id)],
             'phone' => ['sometimes', 'nullable', 'string', 'max:32'],
+            'name' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'onboarded' => ['sometimes', 'boolean'],
+            'job_roles' => ['nullable', 'array'],
+            'job_roles.*' => ['string', 'max:120'],
+            'is_experienced' => ['nullable', 'boolean'],
+            'current_company' => ['nullable', 'string', 'max:200'],
+            'current_role' => ['nullable', 'string', 'max:200'],
+            'preferred_locations' => ['nullable', 'array'],
+            'preferred_locations.*' => ['string', 'max:120'],
+            'willing_to_relocate' => ['nullable', 'boolean'],
+            'employment_preferences' => ['nullable', 'array'],
+            'employment_preferences.*' => ['string', 'max:120'],
+            'expected_salary' => ['nullable', 'integer', 'min:0'],
+            'onboarding_step' => ['sometimes', 'integer', 'min:1', 'max:11'],
+            'current_status' => ['nullable', 'string', 'max:64'],
         ]);
 
         $photoB64 = $validated['profile_photo'] ?? null;
@@ -83,6 +98,15 @@ class JobSeekerProfileController extends Controller
         $emailIn = $hasEmailKey ? ($validated['email'] ?? null) : null;
         $phoneIn = $hasPhoneKey ? ($validated['phone'] ?? null) : null;
         unset($validated['email'], $validated['phone']);
+
+        $hasNameKey = array_key_exists('name', $validated);
+        $nameIn = $hasNameKey ? ($validated['name'] ?? null) : null;
+        unset($validated['name']);
+
+        if ($hasNameKey && $nameIn !== null) {
+            $user->name = $nameIn;
+            $user->save();
+        }
 
         $profile->fill($validated);
 
@@ -120,6 +144,7 @@ class JobSeekerProfileController extends Controller
      */
     private function mergeContactFromUser(array &$data, User $user): void
     {
+        $data['name'] = $user->name;
         $data['email'] = Identifier::isSyntheticEmail($user->email) ? null : $user->email;
         $data['phone'] = $user->phone;
     }
@@ -179,13 +204,23 @@ class JobSeekerProfileController extends Controller
         }
 
         $validated = $request->validate([
-            'resume' => ['required', 'file', 'mimetypes:application/pdf', 'max:5120'], // 5MB
+            'resume' => [
+                'required',
+                'file',
+                'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'max:5120'
+            ], // 5MB
         ]);
 
         /** @var UploadedFile $file */
         $file = $validated['resume'];
 
-        $name = 'resume_'.$request->user()->id.'_'.time().'.pdf';
+        $ext = $file->getClientOriginalExtension();
+        if (empty($ext)) {
+            $ext = 'pdf';
+        }
+
+        $name = 'resume_'.$request->user()->id.'_'.time().'.'.$ext;
         $path = $file->storeAs('resumes', $name, 'public');
 
         $profile->resume_url = url('/media/resumes/'.basename($path));
