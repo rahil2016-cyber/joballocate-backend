@@ -284,6 +284,55 @@ class AuthController extends Controller
         return $this->ok(null, 'Password changed successfully.');
     }
 
+    public function login(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'identifier' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'string'],
+            'role' => ['required', Rule::in([UserRole::JobSeeker->value, UserRole::Company->value])],
+        ]);
+
+        $parts = Identifier::parse($validated['identifier']);
+        $user = $this->findUserByIdentifier($parts);
+
+        if (! $user || ! Hash::check($validated['password'], $user->password)) {
+            return $this->fail('Invalid email/phone or password.', null, 401);
+        }
+
+        if ($user->role !== $validated['role']) {
+            return $this->fail('This account uses a different role.', null, 403);
+        }
+
+        if (! $user->is_active) {
+            return $this->fail('Account is disabled.', null, 403);
+        }
+
+        return $this->issueTokenResponse($user, 'Login successful.');
+    }
+
+    public function setPassword(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            return $this->fail('Unauthorized.', null, 401);
+        }
+
+        $validated = $request->validate([
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'max:190',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
+            ],
+        ]);
+
+        $user->password = Hash::make($validated['password']);
+        $user->save();
+
+        return $this->ok(null, 'Password set successfully.');
+    }
+
     private function findUserByIdentifier(array $parts): ?User
     {
         if ($parts['email'] !== null) {

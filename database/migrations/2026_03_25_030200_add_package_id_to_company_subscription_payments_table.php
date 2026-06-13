@@ -19,12 +19,27 @@ return new class extends Migration
         }
 
         $schema = DB::getDatabaseName();
+        $isSqlite = DB::connection()->getDriverName() === 'sqlite';
 
-        $fkExists = DB::table('information_schema.TABLE_CONSTRAINTS')
-            ->where('CONSTRAINT_SCHEMA', $schema)
-            ->where('TABLE_NAME', 'company_subscription_payments')
-            ->where('CONSTRAINT_NAME', 'cs_pay_pkg_fk')
-            ->exists();
+        if ($isSqlite) {
+            $indexes = Schema::getIndexes('company_subscription_payments');
+            $indexExists = collect($indexes)->contains(fn($index) => $index['name'] === 'cs_pay_company_pkg_coupon_idx');
+
+            $foreignKeys = Schema::getForeignKeys('company_subscription_payments');
+            $fkExists = collect($foreignKeys)->contains(fn($fk) => $fk['name'] === 'cs_pay_pkg_fk');
+        } else {
+            $fkExists = DB::table('information_schema.TABLE_CONSTRAINTS')
+                ->where('CONSTRAINT_SCHEMA', $schema)
+                ->where('TABLE_NAME', 'company_subscription_payments')
+                ->where('CONSTRAINT_NAME', 'cs_pay_pkg_fk')
+                ->exists();
+
+            $indexExists = DB::table('information_schema.STATISTICS')
+                ->where('TABLE_SCHEMA', $schema)
+                ->where('TABLE_NAME', 'company_subscription_payments')
+                ->where('INDEX_NAME', 'cs_pay_company_pkg_coupon_idx')
+                ->exists();
+        }
 
         if (! $fkExists) {
             Schema::table('company_subscription_payments', function (Blueprint $table) {
@@ -34,12 +49,6 @@ return new class extends Migration
                     ->nullOnDelete();
             });
         }
-
-        $indexExists = DB::table('information_schema.STATISTICS')
-            ->where('TABLE_SCHEMA', $schema)
-            ->where('TABLE_NAME', 'company_subscription_payments')
-            ->where('INDEX_NAME', 'cs_pay_company_pkg_coupon_idx')
-            ->exists();
 
         if (! $indexExists) {
             Schema::table('company_subscription_payments', function (Blueprint $table) {
@@ -54,18 +63,27 @@ return new class extends Migration
     public function down(): void
     {
         $schema = DB::getDatabaseName();
+        $isSqlite = DB::connection()->getDriverName() === 'sqlite';
 
-        $indexExists = DB::table('information_schema.STATISTICS')
-            ->where('TABLE_SCHEMA', $schema)
-            ->where('TABLE_NAME', 'company_subscription_payments')
-            ->where('INDEX_NAME', 'cs_pay_company_pkg_coupon_idx')
-            ->exists();
+        if ($isSqlite) {
+            $indexes = Schema::getIndexes('company_subscription_payments');
+            $indexExists = collect($indexes)->contains(fn($index) => $index['name'] === 'cs_pay_company_pkg_coupon_idx');
 
-        $fkExists = DB::table('information_schema.TABLE_CONSTRAINTS')
-            ->where('CONSTRAINT_SCHEMA', $schema)
-            ->where('TABLE_NAME', 'company_subscription_payments')
-            ->where('CONSTRAINT_NAME', 'cs_pay_pkg_fk')
-            ->exists();
+            $foreignKeys = Schema::getForeignKeys('company_subscription_payments');
+            $fkExists = collect($foreignKeys)->contains(fn($fk) => $fk['name'] === 'cs_pay_pkg_fk');
+        } else {
+            $indexExists = DB::table('information_schema.STATISTICS')
+                ->where('TABLE_SCHEMA', $schema)
+                ->where('TABLE_NAME', 'company_subscription_payments')
+                ->where('INDEX_NAME', 'cs_pay_company_pkg_coupon_idx')
+                ->exists();
+
+            $fkExists = DB::table('information_schema.TABLE_CONSTRAINTS')
+                ->where('CONSTRAINT_SCHEMA', $schema)
+                ->where('TABLE_NAME', 'company_subscription_payments')
+                ->where('CONSTRAINT_NAME', 'cs_pay_pkg_fk')
+                ->exists();
+        }
 
         Schema::table('company_subscription_payments', function (Blueprint $table) use ($indexExists, $fkExists) {
             if ($indexExists) {

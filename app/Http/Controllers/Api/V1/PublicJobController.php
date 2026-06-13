@@ -133,4 +133,94 @@ class PublicJobController extends Controller
 
         return $this->ok($this->jobShare->payloadForJob($job));
     }
+
+    public function similar(int $id, Request $request): JsonResponse
+    {
+        JobPost::runAutoCloseJobs();
+
+        $target = JobPost::query()
+            ->where('id', $id)
+            ->where('status', JobPostStatus::Published)
+            ->whereNotNull('published_at')
+            ->first();
+
+        if (! $target) {
+            return $this->fail('Job not found.', null, 404);
+        }
+
+        // Get all other published jobs
+        $candidates = JobPost::query()
+            ->with('company:id,name,slug,logo_url')
+            ->withCount('applications')
+            ->listed()
+            ->where('id', '!=', $id)
+            ->get();
+
+        $targetSkills = is_array($target->skills) ? array_map('strtolower', $target->skills) : [];
+
+        // Helper to extract keywords from title
+        $tokenize = function ($title) {
+            $cleaned = preg_replace('/[^a-z0-9\s]/', '', strtolower($title));
+            $words = preg_split('/\s+/', $cleaned, -1, PREG_SPLIT_NO_EMPTY);
+            // filter out common short words or stop words
+            $stopWords = ['and', 'for', 'the', 'with', 'req', 'hiring', 'required', 'job', 'developer', 'engineer', 'manager', 'lead', 'senior', 'junior'];
+            return array_values(array_filter($words, fn($w) => strlen($w) > 2 && !in_array($w, $stopWords)));
+        };
+
+        $targetTitleWords = $tokenize($target->title);
+
+        $scoredCandidates = $candidates->map(function ($candidate) use ($target, $targetSkills, $targetTitleWords, $tokenize) {
+            $score = 0.0;
+
+            // 1. Industry Type (30%)
+            if ($candidate->industry_type === $target->industry_type) {
+                $score += 30.0;
+            }
+
+            // 2. Functional Area (30%)
+            if ($candidate->functional_area === $target->functional_area) {
+                $score += 30.0;
+            }
+
+            // 3. Skills (20%)
+            $candSkills = is_array($candidate->skills) ? array_map('strtolower', $candidate->skills) : [];
+            if (empty($targetSkills) && empty($candSkills)) {
+                $score += 20.0;
+            } elseif (!empty($targetSkills) && !empty($candSkills)) {
+                $intersection = array_intersect($targetSkills, $candSkills);
+                $skillsMatchPercent = count($intersection) / count($targetSkills);
+                $score += $skillsMatchPercent * 20.0;
+            }
+
+            // 4. Title words (20%)
+            $candTitleWords = $tokenize($candidate->title);
+            if (empty($targetTitleWords) && empty($candTitleWords)) {
+                $score += 20.0;
+            } elseif (!empty($targetTitleWords) && !empty($candTitleWords)) {
+                $intersection = array_intersect($targetTitleWords, $candTitleWords);
+                $titleMatchPercent = count($intersection) / count($targetTitleWords);
+                $score += $titleMatchPercent * 20.0;
+            }
+
+            return [
+                'job' => $candidate,
+                'score' => $score,
+            ];
+        });
+
+        // Filter for at least 40% match, or top ones if none are >= 40%
+        $filtered = $scoredCandidates->filter(fn($item) => $item['score'] >= 40.0)
+            ->sortByDesc('score')
+            ->values();
+
+        if ($filtered->isEmpty() && !$scoredCandidates->isEmpty()) {
+            $filtered = $scoredCandidates->sortByDesc('score')
+                ->take(5)
+                ->values();
+        }
+
+        $results = $filtered->map(fn($item) => $this->transformListedJob($item['job']))->all();
+
+        return $this->ok($results);
+    }
 }

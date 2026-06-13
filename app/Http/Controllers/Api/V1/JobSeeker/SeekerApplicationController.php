@@ -51,8 +51,8 @@ class SeekerApplicationController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (! $profile || ! $profile->canApply()) {
-                return $this->fail('No applications remaining or your package is inactive.', null, 422);
+            if (! $profile) {
+                return $this->fail('Seeker profile not found.', null, 404);
             }
 
             $job = JobPost::query()->where('id', $jobId)->lockForUpdate()->first();
@@ -99,8 +99,7 @@ class SeekerApplicationController extends Controller
                 $job->save();
             }
 
-            $profile->applications_remaining = max(0, (int) $profile->applications_remaining - 1);
-            $profile->save();
+
 
             $application->load(['jobPost.company:id,name,slug']);
 
@@ -136,10 +135,7 @@ class SeekerApplicationController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if ($profile) {
-                $profile->applications_remaining = (int) $profile->applications_remaining + 1;
-                $profile->save();
-            }
+
 
             return $this->ok(null, 'Application withdrawn.');
         });

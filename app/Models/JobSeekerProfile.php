@@ -52,6 +52,17 @@ class JobSeekerProfile extends Model
         'resume_credits_expires_at',
         'total_time_spent_seconds',
         'last_app_activity_at',
+        'onboarded',
+        'job_roles',
+        'is_experienced',
+        'current_company',
+        'current_role',
+        'preferred_locations',
+        'willing_to_relocate',
+        'employment_preferences',
+        'expected_salary',
+        'onboarding_step',
+        'current_status',
     ];
 
     protected function casts(): array
@@ -71,6 +82,13 @@ class JobSeekerProfile extends Model
             'academic_achievements' => 'array',
             'awards_honors' => 'array',
             'competitive_exam_results' => 'array',
+            'onboarded' => 'boolean',
+            'job_roles' => 'array',
+            'is_experienced' => 'boolean',
+            'preferred_locations' => 'array',
+            'willing_to_relocate' => 'boolean',
+            'employment_preferences' => 'array',
+            'onboarding_step' => 'integer',
             'package_activated_at' => 'datetime',
             'package_expires_at' => 'datetime',
             'job_credits_expires_at' => 'datetime',
@@ -82,14 +100,7 @@ class JobSeekerProfile extends Model
     /** Job-application credits: not expired and at least one application left. */
     public function canApply(): bool
     {
-        if ($this->applications_remaining === null || $this->applications_remaining < 1) {
-            return false;
-        }
-        if ($this->job_credits_expires_at === null) {
-            return false;
-        }
-
-        return $this->job_credits_expires_at->isFuture();
+        return true;
     }
 
     /** Resume / AI / PDF credits: not expired and at least one build left. */
