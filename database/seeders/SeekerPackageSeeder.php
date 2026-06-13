@@ -15,79 +15,50 @@ class SeekerPackageSeeder extends Seeder
     {
         $rows = [
             [
-                'key' => 'basic',
-                'title' => 'Basic',
-                'description' => 'Entry plan for applying to a few roles.',
-                'kind' => 'job_applications',
-                'price_inr' => 399,
-                'duration_days' => 25,
-                'applications_included' => 5,
-                'resume_builds_included' => 0,
+                'key' => 'basic_resume',
+                'title' => 'Basic Resume Package',
+                'description' => "Access to 4 Professional Resume Templates\nEasy Resume Editing\nPDF Download",
+                'kind' => 'resume',
+                'price_inr' => 99,
+                'duration_days' => 30,
+                'applications_included' => 0,
+                'resume_builds_included' => 4, // 4 downloads/builds limit or template access handled on client
                 'sort_order' => 10,
             ],
             [
-                'key' => 'standard',
-                'title' => 'Standard',
-                'description' => 'Best value for active job seekers.',
-                'kind' => 'job_applications',
-                'price_inr' => 999,
-                'duration_days' => 50,
-                'applications_included' => 10,
-                'resume_builds_included' => 0,
+                'key' => 'premium_resume',
+                'title' => 'Premium Resume Package',
+                'description' => "Access to 8 Professional Resume Templates\nUnlimited Resume Editing\nPDF Download\nCover Letter Template Included",
+                'kind' => 'resume',
+                'price_inr' => 299,
+                'duration_days' => 90,
+                'applications_included' => 0,
+                'resume_builds_included' => 8,
                 'sort_order' => 20,
             ],
             [
-                'key' => 'premium',
-                'title' => 'Premium',
-                'description' => 'Maximum application credits.',
-                'kind' => 'job_applications',
-                'price_inr' => 1499,
-                'duration_days' => 65,
-                'applications_included' => 16,
-                'resume_builds_included' => 0,
-                'sort_order' => 30,
-            ],
-            [
-                'key' => 'resume_starter',
-                'title' => 'Resume Starter',
-                'description' => 'Export and polish multiple resume versions.',
-                'kind' => 'resume',
-                'price_inr' => 199,
-                'duration_days' => 30,
-                'applications_included' => 0,
-                'resume_builds_included' => 3,
-                'sort_order' => 40,
-            ],
-            [
-                'key' => 'resume_pro',
-                'title' => 'Resume Pro',
-                'description' => 'Higher resume build allowance for power users.',
+                'key' => 'professional_resume',
+                'title' => 'Professional Resume Package',
+                'description' => "Access to All 12 Premium Resume Templates\nUnlimited Resume Editing\nUnlimited PDF Downloads\nPremium Cover Letter Templates\nPriority Customer Support",
                 'kind' => 'resume',
                 'price_inr' => 499,
-                'duration_days' => 90,
+                'duration_days' => 180,
                 'applications_included' => 0,
-                'resume_builds_included' => 10,
-                'sort_order' => 50,
-            ],
-            [
-                'key' => 'combo_value',
-                'title' => 'Jobs + Resume Value',
-                'description' => 'Application credits plus resume exports in one plan.',
-                'kind' => 'combo',
-                'price_inr' => 1299,
-                'duration_days' => 60,
-                'applications_included' => 10,
-                'resume_builds_included' => 5,
-                'sort_order' => 60,
+                'resume_builds_included' => 99999, // unlimited
+                'sort_order' => 30,
             ],
         ];
 
         foreach ($rows as $row) {
-            $inactive = in_array($row['kind'], ['resume', 'combo'], true);
             SeekerPackage::query()->updateOrCreate(
                 ['key' => $row['key']],
-                array_merge($row, ['is_active' => ! $inactive])
+                array_merge($row, ['is_active' => true])
             );
         }
+
+        // Deactivate any old application-only packages
+        SeekerPackage::query()
+            ->whereNotIn('key', ['basic_resume', 'premium_resume', 'professional_resume'])
+            ->update(['is_active' => false]);
     }
 }

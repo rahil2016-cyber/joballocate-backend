@@ -74,14 +74,7 @@ class JobSeekerProfile extends Model
     /** Job-application credits: not expired and at least one application left. */
     public function canApply(): bool
     {
-        if ($this->applications_remaining === null || $this->applications_remaining < 1) {
-            return false;
-        }
-        if ($this->job_credits_expires_at === null) {
-            return false;
-        }
-
-        return $this->job_credits_expires_at->isFuture();
+        return true;
     }
 
     /** Resume / AI / PDF credits: not expired and at least one build left. */

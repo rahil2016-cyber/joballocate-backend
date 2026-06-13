@@ -44,10 +44,12 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/admin-login', [AuthController::class, 'adminLogin'])->middleware('throttle:20,1');
     Route::post('auth/send-otp', [AuthController::class, 'sendOtp'])->middleware('throttle:20,1');
     Route::post('auth/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:30,1');
+    Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:30,1');
 
     Route::get('industry-types', [PublicIndustryTypeController::class, 'index']);
     Route::get('jobs', [PublicJobController::class, 'index']);
     Route::get('jobs/{id}', [PublicJobController::class, 'show'])->whereNumber('id');
+    Route::get('jobs/{id}/similar', [PublicJobController::class, 'similar'])->whereNumber('id');
     Route::get('companies/top', [PublicTopCompaniesController::class, 'index']);
     Route::get('banners', [PublicBannerController::class, 'index']);
 
@@ -58,6 +60,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::post('auth/change-password', [AuthController::class, 'changePassword']);
+        Route::post('auth/set-password', [AuthController::class, 'setPassword']);
         Route::get('me', MeController::class);
 
         Route::prefix('company')->middleware('role:company')->group(function () {

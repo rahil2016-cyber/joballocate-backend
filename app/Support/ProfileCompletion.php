@@ -13,56 +13,50 @@ class ProfileCompletion
      */
     public static function seekerPercent(User $user, JobSeekerProfile $p): int
     {
-        $checks = 0;
-        $total = 13;
+        $percent = 0;
 
-        if (filled($p->headline)) {
-            $checks++;
+        // 1. Basic Info (Name) = 15%
+        if (filled($user->name) && $user->name !== 'User') {
+            $percent += 15;
         }
-        if (filled($p->bio)) {
-            $checks++;
+
+        // 2. Job Interests (job_roles) = 20%
+        if (is_array($p->job_roles) && count($p->job_roles) > 0) {
+            $percent += 20;
         }
+
+        // 3. Skills (skills) = 20%
         if (is_array($p->skills) && count($p->skills) > 0) {
-            $checks++;
+            $percent += 20;
         }
-        if (filled($p->industry_type)) {
-            $checks++;
-        }
+
+        // 4. Education = 10%
         $edu = $p->education;
         if (is_array($edu)) {
             foreach ($edu as $row) {
                 if (is_array($row) && (filled($row['title'] ?? null) || filled($row['institution'] ?? null))) {
-                    $checks++;
+                    $percent += 10;
                     break;
                 }
             }
         }
-        if (filled($p->city)) {
-            $checks++;
-        }
-        if (filled($p->country)) {
-            $checks++;
-        }
-        if ($p->experience_years !== null) {
-            $checks++;
-        }
-        if (filled($p->resume_url)) {
-            $checks++;
-        }
-        if (filled($p->profile_photo_url)) {
-            $checks++;
-        }
-        if ($p->date_of_birth !== null) {
-            $checks++;
-        }
-        if (filled($user->phone)) {
-            $checks++;
-        }
-        if ($p->expected_salary_min !== null || $p->expected_salary_max !== null) {
-            $checks++;
+
+        // 5. Experience / Status = 15%
+        if ($p->is_experienced !== null || filled($p->current_status)) {
+            $percent += 15;
         }
 
-        return (int) round($checks / $total * 100);
+        // 6. Location = 10%
+        if (filled($p->city) || (is_array($p->preferred_locations) && count($p->preferred_locations) > 0)) {
+            $percent += 10;
+        }
+
+        // 7. Resume = 10%
+        if (filled($p->resume_url)) {
+            $percent += 10;
+        }
+
+        return min($percent, 100);
     }
 
     /**
