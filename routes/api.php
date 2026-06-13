@@ -52,6 +52,56 @@ Route::prefix('v1')->group(function () {
     Route::get('jobs/{id}/similar', [PublicJobController::class, 'similar'])->whereNumber('id');
     Route::get('companies/top', [PublicTopCompaniesController::class, 'index']);
     Route::get('banners', [PublicBannerController::class, 'index']);
+    Route::get('seeker-home-popular-categories', function () {
+        return response()->json([
+            'success' => true,
+            'message' => 'OK',
+            'data' => [
+                [
+                    'label' => 'Software',
+                    'industry_type' => 'software_engineering_it',
+                    'search' => null,
+                    'icon' => 'computer_rounded',
+                    'accent_dot' => true,
+                ],
+                [
+                    'label' => 'Analytics',
+                    'industry_type' => 'data_science_analytics',
+                    'search' => null,
+                    'icon' => 'analytics_rounded',
+                    'accent_dot' => false,
+                ],
+                [
+                    'label' => 'Design',
+                    'industry_type' => 'design_ux_creative',
+                    'search' => null,
+                    'icon' => 'palette_rounded',
+                    'accent_dot' => false,
+                ],
+                [
+                    'label' => 'Marketing',
+                    'industry_type' => 'marketing_digital_growth',
+                    'search' => null,
+                    'icon' => 'campaign_rounded',
+                    'accent_dot' => true,
+                ],
+                [
+                    'label' => 'Sales',
+                    'industry_type' => 'sales_business_development',
+                    'search' => null,
+                    'icon' => 'work_outline_rounded',
+                    'accent_dot' => false,
+                ],
+                [
+                    'label' => 'Finance',
+                    'industry_type' => 'banking_finance',
+                    'search' => null,
+                    'icon' => 'account_balance_rounded',
+                    'accent_dot' => false,
+                ],
+            ],
+        ]);
+    });
 
     // Location dropdown data (Full India)
     Route::get('locations/states', [PublicLocationController::class, 'states']);
