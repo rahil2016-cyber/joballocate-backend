@@ -56,7 +56,7 @@ class PublicBannerController extends Controller
             ->values()
             ->all();
 
-        return $this->ok($rows);
+        return $this->ok($rows)->header('Cache-Control', 'no-store');
     }
 }
 

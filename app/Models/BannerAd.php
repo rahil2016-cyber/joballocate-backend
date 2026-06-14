@@ -46,6 +46,10 @@ class BannerAd extends Model
             return null;
         }
 
+        if (preg_match('/^https?:\/\//i', $this->image_path)) {
+            return $this->image_path;
+        }
+
         $name = basename((string) $this->image_path);
         if ($name === '' || $name === '.' || $name === '..') {
             return null;

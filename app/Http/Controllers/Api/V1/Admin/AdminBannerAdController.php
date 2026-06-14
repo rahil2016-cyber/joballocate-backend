@@ -109,7 +109,7 @@ class AdminBannerAdController extends Controller
             $row->image_path = $this->storeOptimizedImage($request->file('image'));
         }
 
-        foreach (['title', 'content', 'below_line', 'target_url', 'background_color', 'audience', 'starts_at', 'expires_at', 'sort_order'] as $f) {
+        foreach (['title', 'content', 'below_line', 'target_url', 'background_color', 'audience', 'starts_at', 'expires_at', 'sort_order', 'status'] as $f) {
             if (array_key_exists($f, $validated)) {
                 $row->{$f} = $validated[$f];
             }
@@ -179,6 +179,7 @@ class AdminBannerAdController extends Controller
             'target_url' => ['sometimes', 'nullable', 'url', 'max:500'],
             'background_color' => ['sometimes', 'nullable', 'regex:/^#?[0-9a-fA-F]{3,8}$/'],
             'audience' => ['sometimes', 'nullable', Rule::in(['all', 'job_seeker', 'employer'])],
+            'status' => ['sometimes', Rule::in(['draft', 'active', 'paused'])],
             'starts_at' => ['sometimes', 'nullable', 'date'],
             'expires_at' => ['sometimes', 'nullable', 'date', 'after:starts_at'],
             'sort_order' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:10000'],
@@ -231,7 +232,11 @@ class AdminBannerAdController extends Controller
 
         imagedestroy($src);
         imagedestroy($dst);
-        Storage::disk('public')->put($path, $bytes);
+        
+        $success = Storage::disk('public')->put($path, $bytes);
+        if (!$success) {
+            throw new \RuntimeException("Failed to write optimized image file to disk at: {$path}. Please verify write permissions for storage/app/public/banner-ads.");
+        }
 
         return $path;
     }

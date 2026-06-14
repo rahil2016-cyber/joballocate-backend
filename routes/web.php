@@ -35,7 +35,7 @@ Route::get('/media/banner-ads/{file}', function (string $file) {
     }
 
     return Storage::disk('public')->response($path, null, [
-        'Cache-Control' => 'public, max-age=86400',
+        'Cache-Control' => 'public, max-age=300, must-revalidate',
     ]);
 })->where('file', '[a-zA-Z0-9._-]+');
 
