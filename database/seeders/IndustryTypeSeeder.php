@@ -38,6 +38,14 @@ class IndustryTypeSeeder extends Seeder
             ['telecaller', 'Telecaller', 170],
             ['banking', 'Banking', 180],
             ['finance', 'Finance', 190],
+            ['retail_e_commerce', 'Retail & E-commerce', 200],
+            ['hospitality_food', 'Hospitality & Food Service', 210],
+            ['delivery_driving', 'Delivery & Driving', 220],
+            ['construction_real_estate', 'Construction & Real Estate', 230],
+            ['media_entertainment', 'Media & Entertainment', 240],
+            ['automotive', 'Automotive & Mechanic', 250],
+            ['beauty_wellness', 'Beauty & Wellness', 260],
+            ['security_housekeeping', 'Security & Housekeeping', 270],
         ];
 
         foreach ($rows as [$key, $label, $sort]) {

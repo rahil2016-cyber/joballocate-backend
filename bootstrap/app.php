@@ -26,6 +26,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
+            if ($e instanceof \Illuminate\Auth\AuthenticationException ||
+                $e instanceof \Illuminate\Validation\ValidationException ||
+                $e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException ||
+                $e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+                return null;
+            }
+
             $status = 500;
             $message = 'Server error.';
 

@@ -30,6 +30,22 @@ class JobPost extends Model
         'published_at',
         'application_deadline_at',
         'max_applications',
+        'assets_required',
+        'languages',
+        'incentive_detail',
+        'job_timings',
+        'working_days',
+        'age_min',
+        'age_max',
+        'gender_preference',
+        'contact_preference',
+        'contact_person',
+        'contact_phone',
+        'contact_email',
+        'department',
+        'role',
+        'security_deposit',
+        'interview_timings',
     ];
 
     protected function casts(): array
@@ -39,6 +55,7 @@ class JobPost extends Model
             'published_at' => 'datetime',
             'application_deadline_at' => 'datetime',
             'status' => JobPostStatus::class,
+            'security_deposit' => 'boolean',
         ];
     }
 

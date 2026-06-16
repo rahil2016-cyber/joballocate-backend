@@ -48,6 +48,8 @@ class ApiAuthOtpTest extends TestCase
             'intent' => 'register',
             'role' => 'job_seeker',
             'name' => 'Test User',
+            'state' => 'Karnataka',
+            'district' => 'Davanagere',
         ]);
 
         $verify->assertOk()

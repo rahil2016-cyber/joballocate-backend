@@ -33,6 +33,20 @@ trait TransformsPublicJobPost
             'max_applications' => $job->max_applications,
             'applications_count' => $job->applications_count,
             'company' => $job->company,
+            'assets_required' => $job->assets_required,
+            'languages' => $job->languages,
+            'incentive_detail' => $job->incentive_detail,
+            'job_timings' => $job->job_timings,
+            'working_days' => $job->working_days,
+            'age_min' => $job->age_min,
+            'age_max' => $job->age_max,
+            'gender_preference' => $job->gender_preference,
+            'contact_preference' => $job->contact_preference,
+            'contact_person' => $job->contact_person,
+            'contact_phone' => $job->contact_phone,
+            'contact_email' => $job->contact_email,
+            'department' => $job->department,
+            'role' => $job->role,
         ];
     }
 }
