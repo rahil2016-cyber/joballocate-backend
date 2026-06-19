@@ -47,6 +47,9 @@ trait TransformsPublicJobPost
             'contact_email' => $job->contact_email,
             'department' => $job->department,
             'role' => $job->role,
+            'security_deposit' => $job->security_deposit,
+            'security_deposit_amount' => $job->security_deposit_amount,
+            'interview_timings' => $job->interview_timings,
         ];
     }
 }

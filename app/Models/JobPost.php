@@ -45,6 +45,7 @@ class JobPost extends Model
         'department',
         'role',
         'security_deposit',
+        'security_deposit_amount',
         'interview_timings',
     ];
 

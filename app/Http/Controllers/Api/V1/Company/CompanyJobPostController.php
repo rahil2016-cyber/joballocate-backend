@@ -88,6 +88,7 @@ class CompanyJobPostController extends Controller
             'department' => ['nullable', 'string', 'max:200'],
             'role' => ['nullable', 'string', 'max:200'],
             'security_deposit' => ['nullable', 'boolean'],
+            'security_deposit_amount' => ['nullable', 'string', 'max:500'],
             'interview_timings' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -132,6 +133,7 @@ class CompanyJobPostController extends Controller
             'department' => $validated['department'] ?? null,
             'role' => $validated['role'] ?? null,
             'security_deposit' => $validated['security_deposit'] ?? false,
+            'security_deposit_amount' => $validated['security_deposit_amount'] ?? null,
             'interview_timings' => $validated['interview_timings'] ?? null,
         ]);
 
@@ -190,6 +192,7 @@ class CompanyJobPostController extends Controller
             'department' => ['nullable', 'string', 'max:200'],
             'role' => ['nullable', 'string', 'max:200'],
             'security_deposit' => ['nullable', 'boolean'],
+            'security_deposit_amount' => ['nullable', 'string', 'max:500'],
             'interview_timings' => ['nullable', 'string', 'max:500'],
         ]);
 
