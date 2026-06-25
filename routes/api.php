@@ -51,6 +51,7 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/admin-login', [AuthController::class, 'adminLogin'])->middleware('throttle:20,1');
     Route::post('auth/firebase-authenticate', [AuthController::class, 'firebaseAuthenticate'])->middleware('throttle:30,1');
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:30,1');
+    Route::post('auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:30,1');
 
     Route::get('industry-types', [PublicIndustryTypeController::class, 'index']);
     Route::get('seeker-home-popular-categories', [PublicIndustryTypeController::class, 'seekerHomePopular']);

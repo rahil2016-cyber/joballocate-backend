@@ -461,6 +461,44 @@ class AuthController extends Controller
         return $this->ok(null, 'Password set successfully.');
     }
 
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id_token' => ['required', 'string'],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'max:190',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
+            ],
+        ]);
+
+        $claims = \App\Support\FirebaseTokenVerifier::verify($validated['id_token']);
+
+        if (!$claims) {
+            return $this->fail('Invalid or expired Firebase ID token.', null, 401);
+        }
+
+        $phone = $claims['phone_number'];
+        if (!$phone) {
+            return $this->fail('The Firebase token does not contain a phone number.', null, 400);
+        }
+
+        $cleanPhone = preg_replace('/\D/', '', $phone) ?? '';
+
+        $user = User::where('phone', $cleanPhone)->first();
+
+        if (!$user) {
+            return $this->fail('No account found for this phone number. Please sign up first.', null, 404);
+        }
+
+        $user->password = Hash::make($validated['password']);
+        $user->save();
+
+        return $this->issueTokenResponse($user, 'Password reset successful. Logged in.');
+    }
+
     private function findUserByIdentifier(array $parts): ?User
     {
         if ($parts['email'] !== null) {
