@@ -250,9 +250,9 @@ class AuthController extends Controller
             return $this->fail('The Firebase token does not contain a phone number.', null, 400);
         }
 
-        $cleanPhone = preg_replace('/\D/', '', $phone) ?? '';
+        $cleanPhone = Identifier::cleanPhone($phone);
 
-        $user = User::where('phone', $cleanPhone)->first();
+        $user = User::whereIn('phone', [$cleanPhone, '91' . $cleanPhone])->first();
 
         if ($user) {
             // Log in existing user
@@ -485,9 +485,9 @@ class AuthController extends Controller
             return $this->fail('The Firebase token does not contain a phone number.', null, 400);
         }
 
-        $cleanPhone = preg_replace('/\D/', '', $phone) ?? '';
+        $cleanPhone = Identifier::cleanPhone($phone);
 
-        $user = User::where('phone', $cleanPhone)->first();
+        $user = User::whereIn('phone', [$cleanPhone, '91' . $cleanPhone])->first();
 
         if (!$user) {
             return $this->fail('No account found for this phone number. Please sign up first.', null, 404);
@@ -506,7 +506,7 @@ class AuthController extends Controller
         }
 
         if ($parts['phone'] !== null) {
-            return User::where('phone', $parts['phone'])->first();
+            return User::whereIn('phone', [$parts['phone'], '91' . $parts['phone']])->first();
         }
 
         return null;

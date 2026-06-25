@@ -49,6 +49,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     Route::post('auth/admin-login', [AuthController::class, 'adminLogin'])->middleware('throttle:20,1');
+    Route::post('auth/send-otp', [AuthController::class, 'sendOtp'])->middleware('throttle:20,1');
+    Route::post('auth/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:30,1');
     Route::post('auth/firebase-authenticate', [AuthController::class, 'firebaseAuthenticate'])->middleware('throttle:30,1');
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:30,1');
     Route::post('auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:30,1');

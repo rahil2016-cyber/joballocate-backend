@@ -4,6 +4,19 @@ namespace App\Support;
 
 final class Identifier
 {
+    public static function cleanPhone(string $phone): string
+    {
+        $digits = preg_replace('/\D/', '', $phone) ?? '';
+        if (strlen($digits) === 12 && str_starts_with($digits, '91')) {
+            $digits = substr($digits, 2);
+        } elseif (strlen($digits) === 13 && str_starts_with($digits, '091')) {
+            $digits = substr($digits, 3);
+        } elseif (strlen($digits) === 11 && str_starts_with($digits, '0')) {
+            $digits = substr($digits, 1);
+        }
+        return $digits;
+    }
+
     public static function parse(string $raw): array
     {
         $raw = trim($raw);
@@ -16,7 +29,7 @@ final class Identifier
             ];
         }
 
-        $digits = preg_replace('/\D/', '', $raw) ?? '';
+        $digits = self::cleanPhone($raw);
 
         return [
             'type' => 'phone',
