@@ -148,12 +148,17 @@ class PublicJobController extends Controller
             return $this->fail('Job not found.', null, 404);
         }
 
-        // Get all other published jobs
+        // Get candidate jobs pre-filtered by industry or functional area to limit memory usage
         $candidates = JobPost::query()
             ->with('company:id,name,slug,logo_url')
             ->withCount('applications')
             ->listed()
             ->where('id', '!=', $id)
+            ->where(function ($query) use ($target) {
+                $query->where('industry_type', $target->industry_type)
+                      ->orWhere('functional_area', $target->functional_area);
+            })
+            ->limit(50)
             ->get();
 
         $targetSkills = is_array($target->skills) ? array_map('strtolower', $target->skills) : [];

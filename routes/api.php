@@ -42,12 +42,14 @@ use App\Http\Controllers\Api\V1\PublicLocationController;
 use App\Http\Controllers\Api\V1\PublicJobController;
 use App\Http\Controllers\Api\V1\PublicReferEarnController;
 use App\Http\Controllers\Api\V1\PublicResumeDemoController;
+use App\Http\Controllers\Api\DeviceTokenController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\AdminNotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     Route::post('auth/admin-login', [AuthController::class, 'adminLogin'])->middleware('throttle:20,1');
-    Route::post('auth/send-otp', [AuthController::class, 'sendOtp'])->middleware('throttle:20,1');
-    Route::post('auth/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:30,1');
+    Route::post('auth/firebase-authenticate', [AuthController::class, 'firebaseAuthenticate'])->middleware('throttle:30,1');
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:30,1');
 
     Route::get('industry-types', [PublicIndustryTypeController::class, 'index']);
@@ -72,6 +74,16 @@ Route::prefix('v1')->group(function () {
         Route::post('auth/change-password', [AuthController::class, 'changePassword']);
         Route::post('auth/set-password', [AuthController::class, 'setPassword']);
         Route::get('me', MeController::class);
+
+        // ── FCM device tokens (all authenticated users) ───────────────────
+        Route::post('device-token', [DeviceTokenController::class, 'store']);
+        Route::delete('device-token', [DeviceTokenController::class, 'destroy']);
+
+        // ── In-app notification inbox ─────────────────────────────────────
+        Route::get('notifications', [NotificationController::class, 'index']);
+        Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::post('notifications/read-all', [NotificationController::class, 'readAll']);
+        Route::post('notifications/{id}/read', [NotificationController::class, 'markRead'])->whereNumber('id');
 
         Route::prefix('company')->middleware('role:company')->group(function () {
             Route::get('profile', [CompanyProfileController::class, 'show']);
@@ -192,6 +204,9 @@ Route::prefix('v1')->group(function () {
                 ->whereNumber('packageId');
             Route::get('company-packages/{packageId}/coupons', [AdminCompanySubscriptionPackageController::class, 'coupons'])
                 ->whereNumber('packageId');
+
+            // ── Admin: broadcast push notifications ───────────────────────
+            Route::post('send-notification', [AdminNotificationController::class, 'send']);
         });
     });
 });

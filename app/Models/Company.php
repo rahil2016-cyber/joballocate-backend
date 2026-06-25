@@ -6,6 +6,7 @@ use App\Enums\CompanyVerificationStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 class Company extends Model
 {
@@ -69,8 +70,37 @@ class Company extends Model
         return $this->hasMany(JobPost::class);
     }
 
+    /** All subscription payment records, ordered by cycle. */
+    public function subscriptionPayments(): HasMany
+    {
+        return $this->hasMany(CompanySubscriptionPayment::class)->orderByDesc('cycle_number');
+    }
+
     public function isVerified(): bool
     {
         return $this->verification_status === CompanyVerificationStatus::Verified;
+    }
+
+    /**
+     * Whether the company currently has an active paid subscription.
+     * A company is "premium" when their latest payment was made within 31 days.
+     */
+    public function isPremium(): bool
+    {
+        $latest = $this->subscriptionPayments()->first();
+        if ($latest === null) return false;
+        $purchasedAt = Carbon::parse($latest->purchased_at);
+        return $purchasedAt->diffInDays(Carbon::now()) <= 31;
+    }
+
+    /**
+     * Returns the expiration date of the latest subscription cycle.
+     * Each cycle is considered to last 31 days from purchase date.
+     */
+    public function subscriptionExpiresAt(): ?Carbon
+    {
+        $latest = $this->subscriptionPayments()->first();
+        if ($latest === null) return null;
+        return Carbon::parse($latest->purchased_at)->addDays(31);
     }
 }

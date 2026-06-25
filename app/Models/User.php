@@ -66,6 +66,18 @@ class User extends Authenticatable
         return $this->hasMany(ResumeDraft::class);
     }
 
+    /** All registered device tokens for push notifications (multi-device support). */
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(UserDeviceToken::class);
+    }
+
+    /** In-app notification history. */
+    public function appNotifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
     public function hasRole(UserRole $role): bool
     {
         return $this->role === $role->value;

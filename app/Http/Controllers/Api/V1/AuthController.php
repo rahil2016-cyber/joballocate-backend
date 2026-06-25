@@ -219,6 +219,134 @@ class AuthController extends Controller
         return $this->issueTokenResponse($user->fresh(), 'Registration successful.');
     }
 
+    public function firebaseAuthenticate(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id_token' => ['required', 'string'],
+            'role' => ['required', Rule::in([UserRole::JobSeeker->value, UserRole::Company->value])],
+            // Registration optional details (only used if account doesn't exist yet)
+            'name' => ['nullable', 'string', 'max:120'],
+            'company_name' => ['nullable', 'string', 'max:160'],
+            'gst_number' => ['nullable', 'string', 'max:32'],
+            'industry' => ['nullable', 'string', 'max:120'],
+            'website' => ['nullable', 'string', 'max:255'],
+            'company_kind' => ['nullable', Rule::in(['company', 'consultancy'])],
+            'consultancy_hiring_for' => ['nullable', 'string', 'max:160'],
+            'hide_hiring_company' => ['nullable', 'boolean'],
+            'state' => ['nullable', 'string', 'max:120'],
+            'district' => ['nullable', 'string', 'max:120'],
+            'city' => ['nullable', 'string', 'max:120'],
+            'referral_code' => ['nullable', 'string', 'max:64'],
+        ]);
+
+        $claims = \App\Support\FirebaseTokenVerifier::verify($validated['id_token']);
+
+        if (!$claims) {
+            return $this->fail('Invalid or expired Firebase ID token.', null, 401);
+        }
+
+        $phone = $claims['phone_number'];
+        if (!$phone) {
+            return $this->fail('The Firebase token does not contain a phone number.', null, 400);
+        }
+
+        $cleanPhone = preg_replace('/\D/', '', $phone) ?? '';
+
+        $user = User::where('phone', $cleanPhone)->first();
+
+        if ($user) {
+            // Log in existing user
+            if ($user->role !== $validated['role']) {
+                return $this->fail('This account uses a different role. Log in as ' . $user->role . '.', null, 403);
+            }
+            if (!$user->is_active) {
+                return $this->fail('Account is disabled.', null, 403);
+            }
+            return $this->issueTokenResponse($user, 'Login successful.');
+        }
+
+        // Account doesn't exist, register new user
+        $email = Identifier::syntheticEmailFromPhone($cleanPhone);
+
+        if (User::where('email', $email)->exists()) {
+            return $this->fail('Synthetic email already exists.', null, 409);
+        }
+
+        $user = User::create([
+            'name' => $validated['name'] ?? $claims['name'] ?? 'User',
+            'email' => $email,
+            'phone' => $cleanPhone,
+            'password' => Hash::make(Str::random(64)),
+            'role' => $validated['role'],
+            'is_active' => true,
+        ]);
+
+        if ($validated['role'] === UserRole::Company->value) {
+            if (empty($validated['company_name'])) {
+                $user->delete();
+                return $this->fail('Company name is required for registration.', null, 422);
+            }
+
+            $slug = $this->uniqueCompanySlug(Str::slug($validated['company_name']));
+            $verified = $this->settings->autoVerifyCompanies()
+                ? CompanyVerificationStatus::Verified
+                : CompanyVerificationStatus::Unverified;
+
+            $locParts = array_values(array_filter([
+                $validated['city'] ?? null,
+                $validated['district'] ?? null,
+                $validated['state'] ?? null,
+            ]));
+            $location = implode(', ', $locParts);
+
+            Company::create([
+                'user_id' => $user->id,
+                'name' => $validated['company_name'],
+                'company_kind' => $validated['company_kind'] ?? 'company',
+                'slug' => $slug,
+                'gst_number' => $validated['gst_number'] ?? null,
+                'industry' => $validated['industry'] ?? null,
+                'website' => $validated['website'] ?? null,
+                'consultancy_hiring_for' => $validated['consultancy_hiring_for'] ?? null,
+                'hide_hiring_company' => (bool) ($validated['hide_hiring_company'] ?? false),
+                'verification_status' => $verified,
+                'state' => $validated['state'] ?? null,
+                'district' => $validated['district'] ?? null,
+                'city' => $validated['city'] ?? null,
+                'location' => $location !== '' ? $location : null,
+            ]);
+        }
+
+        if ($validated['role'] === UserRole::JobSeeker->value) {
+            JobSeekerProfile::create([
+                'user_id' => $user->id,
+                'state' => $validated['state'] ?? null,
+                'district' => $validated['district'] ?? null,
+                'city' => $validated['city'] ?? null,
+            ]);
+        }
+
+        $audience = $validated['role'] === UserRole::Company->value
+            ? AudiencePromoCode::AUDIENCE_COMPANY
+            : AudiencePromoCode::AUDIENCE_JOB_SEEKER;
+
+        if (!empty($validated['referral_code'])) {
+            $check = $this->referEarn->validateForRegistration(
+                $validated['referral_code'],
+                $audience
+            );
+            if (!($check['valid'] ?? false)) {
+                $user->delete();
+                return $this->fail($check['message'] ?? 'Invalid referral code.', null, 422);
+            }
+            $this->referEarn->redeemOnRegistration($user, $validated['referral_code'], $audience);
+        } else {
+            $this->referEarn->ensureUserReferralCode($user);
+        }
+
+        return $this->issueTokenResponse($user->fresh(), 'Registration successful.');
+    }
+
     public function adminLogin(Request $request): JsonResponse
     {
         $validated = $request->validate([

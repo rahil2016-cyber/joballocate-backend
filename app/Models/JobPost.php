@@ -92,16 +92,10 @@ class JobPost extends Model
         static::query()
             ->where('status', JobPostStatus::Published)
             ->whereNotNull('max_applications')
-            ->chunkById(100, function ($jobs): void {
-                foreach ($jobs as $job) {
-                    $count = $job->applications()->count();
-                    if ($count >= $job->max_applications) {
-                        static::query()->whereKey($job->id)->update([
-                            'status' => JobPostStatus::Closed->value,
-                            'updated_at' => now(),
-                        ]);
-                    }
-                }
-            });
+            ->whereRaw('max_applications <= (select count(*) from applications where applications.job_post_id = job_posts.id)')
+            ->update([
+                'status' => JobPostStatus::Closed->value,
+                'updated_at' => now(),
+            ]);
     }
 }

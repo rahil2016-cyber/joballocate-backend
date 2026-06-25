@@ -267,7 +267,7 @@ class JobSeekerProfileController extends Controller
             'resume' => [
                 'required',
                 'file',
-                'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'mimes:pdf',
                 'max:5120'
             ], // 5MB
         ]);
