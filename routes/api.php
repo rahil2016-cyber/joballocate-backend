@@ -17,11 +17,13 @@ use App\Http\Controllers\Api\V1\Admin\AdminReferEarnController;
 use App\Http\Controllers\Api\V1\Admin\AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\RazorpayWebhookController;
 use App\Http\Controllers\Api\V1\Company\CompanyApplicationController;
 use App\Http\Controllers\Api\V1\Company\CompanyJobPostController;
 use App\Http\Controllers\Api\V1\Company\CompanyProfileController;
 use App\Http\Controllers\Api\V1\Company\CompanySubscriptionController;
 use App\Http\Controllers\Api\V1\JobSeeker\JobSeekerPackageController;
+use App\Http\Controllers\Api\V1\JobSeeker\JobSeekerPaymentController;
 use App\Http\Controllers\Api\V1\JobSeeker\JobSeekerProfileController;
 use App\Http\Controllers\Api\V1\JobSeeker\ResumeDraftController;
 use App\Http\Controllers\Api\V1\JobSeeker\ResumeHtmlPreviewController;
@@ -67,6 +69,7 @@ Route::prefix('v1')->group(function () {
     Route::post('refer-earn/validate', [PublicReferEarnController::class, 'validateCode']);
     Route::get('resume/demo-profiles', [PublicResumeDemoController::class, 'demoProfiles']);
     Route::get('resume/demo-preview-html-batch', [PublicResumeDemoController::class, 'demoPreviewHtmlBatch']);
+    Route::post('payments/webhook', [RazorpayWebhookController::class, 'handle']);
 
     // Location dropdown data (Full India)
     Route::get('locations/states', [PublicLocationController::class, 'states']);
@@ -111,6 +114,8 @@ Route::prefix('v1')->group(function () {
             Route::get('packages/catalog', [JobSeekerPackageController::class, 'catalog']);
             Route::get('packages/purchases', [JobSeekerPackageController::class, 'purchases']);
             Route::post('packages/select', [JobSeekerPackageController::class, 'select']);
+            Route::post('payments/create-order', [JobSeekerPaymentController::class, 'createOrder']);
+            Route::post('payments/verify-signature', [JobSeekerPaymentController::class, 'verifySignature']);
             Route::get('applications', [SeekerApplicationController::class, 'index']);
             Route::delete('applications/{applicationId}', [SeekerApplicationController::class, 'destroy'])
                 ->whereNumber('applicationId');
