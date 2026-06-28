@@ -28,9 +28,17 @@ class ResumePdfPurchaseController extends Controller
         ]);
 
         $user = $request->user();
+        $profile = $user->jobSeekerProfile;
+
+        if (!$profile || !$profile->canBuildResume()) {
+            return $this->fail('Resume download is restricted to users with an active subscription.', null, 403);
+        }
+
         $now = now();
 
-        $row = DB::transaction(function () use ($user, $validated, $now): SeekerPackagePurchase {
+        $row = DB::transaction(function () use ($user, $profile, $validated, $now): SeekerPackagePurchase {
+            $profile->decrement('resume_builds_remaining');
+
             return SeekerPackagePurchase::query()->create([
                 'user_id' => $user->id,
                 'seeker_package_id' => null,

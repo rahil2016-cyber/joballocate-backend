@@ -55,6 +55,18 @@ class CompanyJobPostController extends Controller
             return $this->fail('Company profile not found.', null, 404);
         }
 
+        $successfulPaymentsCount = $company->subscriptionPayments()
+            ->where('payment_status', 'successful')
+            ->count();
+
+        $totalJobsCount = \App\Models\JobPost::query()
+            ->where('company_id', $company->id)
+            ->count();
+
+        if ($successfulPaymentsCount < $totalJobsCount) {
+            return $this->fail('Active subscription required. Please purchase a plan to post a job.', null, 402);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'location' => ['nullable', 'string', 'max:200'],
@@ -140,6 +152,17 @@ class CompanyJobPostController extends Controller
         $message = $job->status === JobPostStatus::Published
             ? 'Job published.'
             : 'Job submitted for admin review.';
+
+        $job->load(['company']);
+
+        try {
+            $employer = $request->user();
+            if ($employer && $employer->email && !\App\Support\Identifier::isSyntheticEmail($employer->email)) {
+                \Illuminate\Support\Facades\Mail::to($employer->email)->send(new \App\Mail\CompanyJobPostedMail($job));
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[CompanyJobPostController] Failed to send job posted email: ' . $e->getMessage());
+        }
 
         return $this->ok($job, $message, null, 201);
     }

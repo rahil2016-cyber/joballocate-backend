@@ -104,6 +104,17 @@ class CompanyApplicationController extends Controller
         }
         $application->save();
 
+        $application->load(['user', 'jobPost.company']);
+
+        try {
+            $seeker = $application->user;
+            if ($seeker && $seeker->email && !\App\Support\Identifier::isSyntheticEmail($seeker->email)) {
+                \Illuminate\Support\Facades\Mail::to($seeker->email)->send(new \App\Mail\JobApplicationStatusUpdatedMail($application));
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[CompanyApplicationController] Failed to send status update email: ' . $e->getMessage());
+        }
+
         return $this->ok($application->fresh()->load('user:id,name,email,phone'), 'Application updated.');
     }
 

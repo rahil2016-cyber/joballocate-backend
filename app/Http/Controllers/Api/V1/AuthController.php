@@ -86,6 +86,7 @@ class AuthController extends Controller
             'intent' => ['required', Rule::in(['register', 'login'])],
             'role' => ['required', Rule::in([UserRole::JobSeeker->value, UserRole::Company->value])],
             'name' => [Rule::requiredIf(fn () => $request->input('intent') === 'register'), 'nullable', 'string', 'max:120'],
+            'email' => [Rule::requiredIf(fn () => $request->input('intent') === 'register'), 'nullable', 'string', 'email', 'max:255', 'unique:users,email'],
             'company_name' => [Rule::requiredIf(fn () => $request->input('intent') === 'register' && $request->input('role') === UserRole::Company->value), 'nullable', 'string', 'max:160'],
             'gst_number' => ['nullable', 'string', 'max:32'],
             'industry' => ['nullable', 'string', 'max:120'],
@@ -139,7 +140,7 @@ class AuthController extends Controller
             return $this->fail('An account already exists for this identifier.', null, 409);
         }
 
-        $email = Identifier::resolveLoginEmail($parts);
+        $email = $validated['email'] ?? Identifier::resolveLoginEmail($parts);
 
         if (User::where('email', $email)->exists()) {
             return $this->fail('Email already registered.', null, 409);
@@ -226,6 +227,7 @@ class AuthController extends Controller
             'role' => ['required', Rule::in([UserRole::JobSeeker->value, UserRole::Company->value])],
             // Registration optional details (only used if account doesn't exist yet)
             'name' => ['nullable', 'string', 'max:120'],
+            'email' => ['nullable', 'string', 'email', 'max:255'],
             'company_name' => ['nullable', 'string', 'max:160'],
             'gst_number' => ['nullable', 'string', 'max:32'],
             'industry' => ['nullable', 'string', 'max:120'],
@@ -266,10 +268,18 @@ class AuthController extends Controller
         }
 
         // Account doesn't exist, register new user
-        $email = Identifier::syntheticEmailFromPhone($cleanPhone);
+        if (empty($validated['email'])) {
+            return $this->fail('Email is required for registration.', [
+                'email' => ['The email field is required.']
+            ], 422);
+        }
+
+        $email = $validated['email'];
 
         if (User::where('email', $email)->exists()) {
-            return $this->fail('Synthetic email already exists.', null, 409);
+            return $this->fail('Email already registered.', [
+                'email' => ['The email has already been taken.']
+            ], 409);
         }
 
         $user = User::create([

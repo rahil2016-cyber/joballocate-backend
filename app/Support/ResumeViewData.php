@@ -146,6 +146,36 @@ final class ResumeViewData
             }
         }
 
+        if ($educationList === []) {
+            if (self::str($grad['course'] ?? null) !== '' || self::str($grad['college'] ?? null) !== '') {
+                $educationList[] = [
+                    'title' => self::str($grad['course'] ?? null) ?: 'Graduation',
+                    'institution' => self::str($grad['college'] ?? null),
+                    'year' => '',
+                    'marks' => self::str($grad['score'] ?? null),
+                    'mode' => '',
+                ];
+            }
+            if (self::str($c12['board_name'] ?? null) !== '' || self::str($c12['score'] ?? null) !== '') {
+                $educationList[] = [
+                    'title' => 'Class 12th / Intermediate',
+                    'institution' => self::str($c12['board_name'] ?? null),
+                    'year' => self::str($c12['year_of_passing'] ?? null),
+                    'marks' => self::str($c12['score'] ?? null),
+                    'mode' => self::str($c12['medium'] ?? null) !== '' ? 'Medium: '.self::str($c12['medium']) : '',
+                ];
+            }
+            if (self::str($c10['board_name'] ?? null) !== '' || self::str($c10['score'] ?? null) !== '') {
+                $educationList[] = [
+                    'title' => 'Class 10th / Matriculation',
+                    'institution' => self::str($c10['board_name'] ?? null),
+                    'year' => self::str($c10['year_of_passing'] ?? null),
+                    'marks' => self::str($c10['score'] ?? null),
+                    'mode' => self::str($c10['medium'] ?? null) !== '' ? 'Medium: '.self::str($c10['medium']) : '',
+                ];
+            }
+        }
+
         $internships = self::experienceBlocks($data['internships'] ?? null);
         $projects = self::experienceBlocks($data['projects'] ?? null);
         $work = self::experienceBlocks($data['work_experience'] ?? null);
@@ -172,6 +202,7 @@ final class ResumeViewData
         $exams = self::examLines($data['competitive_exam_results'] ?? null, $profile?->competitive_exam_results);
 
         return [
+            'personal_details' => $personalRows,
             'full_name' => $fullName,
             'professional_title' => $title,
             'summary' => $summary,
@@ -303,6 +334,9 @@ final class ResumeViewData
     private static function str(mixed $v): string
     {
         if ($v === null) {
+            return '';
+        }
+        if (is_array($v)) {
             return '';
         }
         if (is_string($v)) {

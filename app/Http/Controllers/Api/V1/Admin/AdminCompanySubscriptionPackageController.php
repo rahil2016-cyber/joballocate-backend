@@ -50,7 +50,7 @@ class AdminCompanySubscriptionPackageController extends Controller
 
         $p = CompanySubscriptionPackage::create([
             'title' => trim($validated['title']),
-            'monthly_price_inr' => (int) ($validated['monthly_price_inr'] ?? 399),
+            'monthly_price_inr' => (int) ($validated['monthly_price_inr'] ?? 499),
             'is_active' => (bool) ($validated['is_active'] ?? true),
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
         ]);

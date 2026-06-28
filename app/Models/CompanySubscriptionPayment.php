@@ -20,6 +20,10 @@ class CompanySubscriptionPayment extends Model
         'coupon_code_used',
         'amount_inr',
         'is_free',
+        'payment_status',
+        'razorpay_order_id',
+        'razorpay_payment_id',
+        'razorpay_signature',
         'purchased_at',
     ];
 

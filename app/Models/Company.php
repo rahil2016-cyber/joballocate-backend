@@ -73,7 +73,12 @@ class Company extends Model
     /** All subscription payment records, ordered by cycle. */
     public function subscriptionPayments(): HasMany
     {
-        return $this->hasMany(CompanySubscriptionPayment::class)->orderByDesc('cycle_number');
+        return $this->hasMany(CompanySubscriptionPayment::class)
+            ->where(function ($q) {
+                $q->where('payment_status', 'successful')
+                  ->orWhere('is_free', true);
+            })
+            ->orderByDesc('cycle_number');
     }
 
     public function isVerified(): bool

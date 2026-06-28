@@ -70,6 +70,37 @@ class RazorpayWebhookController extends Controller
                         'message' => 'Webhook processed and purchase activated.'
                     ], 200);
                 }
+
+                // Check if it's a Company Subscription Payment
+                $companyPayment = \App\Models\CompanySubscriptionPayment::query()
+                    ->where('razorpay_order_id', $orderId)
+                    ->first();
+
+                if ($companyPayment) {
+                    if ($companyPayment->payment_status !== 'successful') {
+                        $companyPayment->update([
+                            'payment_status' => 'successful',
+                            'razorpay_payment_id' => $paymentId,
+                            'razorpay_signature' => $paymentSignature,
+                            'purchased_at' => now(),
+                        ]);
+
+                        // Try to send success email
+                        try {
+                            $user = $companyPayment->company->user;
+                            if ($user && $user->email && !\App\Support\Identifier::isSyntheticEmail($user->email)) {
+                                \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\CompanySubscriptionSuccessMail($companyPayment));
+                            }
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::warning('[RazorpayWebhookController] Failed to send email: ' . $e->getMessage());
+                        }
+                    }
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Webhook processed and company subscription activated.'
+                    ], 200);
+                }
             }
 
             return response()->json([

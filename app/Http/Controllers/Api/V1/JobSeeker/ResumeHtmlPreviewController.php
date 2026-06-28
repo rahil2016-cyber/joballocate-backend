@@ -18,6 +18,7 @@ class ResumeHtmlPreviewController extends Controller
     use ApiResponses;
 
     public const TEMPLATE_KEYS = [
+        't13_academic_clean',
         't1_teal_sidebar',
         't2_minimal',
         't3_bold_navy',

@@ -19,7 +19,7 @@ class OpenRouterResumeAiService
             throw new RuntimeException('Resume AI is not configured (MODEL_KEY missing).');
         }
 
-        $model = config('resume_ai.model', 'arcee-ai/trinity-large-preview:free');
+        $model = config('resume_ai.model', 'openrouter/free');
         $url = (string) config('resume_ai.chat_completions_url', 'https://openrouter.ai/api/v1/chat/completions');
 
         $system = <<<'SYS'

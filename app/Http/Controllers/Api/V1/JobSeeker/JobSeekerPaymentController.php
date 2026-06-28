@@ -142,6 +142,15 @@ class JobSeekerPaymentController extends Controller
 
             $purchase->activate($validated['razorpay_payment_id'], $validated['razorpay_signature']);
 
+            try {
+                $user = $purchase->user;
+                if ($user->email && !\App\Support\Identifier::isSyntheticEmail($user->email)) {
+                    \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\JobSeekerPaymentSuccessMail($purchase));
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('[JobSeekerPaymentController] Failed to send email: ' . $e->getMessage());
+            }
+
             $profile = $purchase->user->jobSeekerProfile;
 
             return $this->ok($profile ? $profile->fresh() : null, 'Payment verified and package activated successfully.');

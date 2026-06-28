@@ -91,6 +91,14 @@ class JobPost extends Model
 
         static::query()
             ->where('status', JobPostStatus::Published)
+            ->where('published_at', '<=', now()->subDays(30))
+            ->update([
+                'status' => JobPostStatus::Closed->value,
+                'updated_at' => now(),
+            ]);
+
+        static::query()
+            ->where('status', JobPostStatus::Published)
             ->whereNotNull('max_applications')
             ->whereRaw('max_applications <= (select count(*) from applications where applications.job_post_id = job_posts.id)')
             ->update([

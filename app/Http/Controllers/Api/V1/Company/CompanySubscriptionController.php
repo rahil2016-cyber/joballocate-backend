@@ -11,6 +11,8 @@ use App\Models\CompanySubscriptionPackage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Razorpay\Api\Api;
+use Razorpay\Api\Errors\SignatureVerificationError;
 
 class CompanySubscriptionController extends Controller
 {
@@ -78,6 +80,16 @@ class CompanySubscriptionController extends Controller
 
             $verified = $company->isVerified();
 
+            $successfulPaymentsCount = $company->subscriptionPayments()
+                ->where('payment_status', 'successful')
+                ->count();
+
+            $totalJobsCount = \App\Models\JobPost::query()
+                ->where('company_id', $company->id)
+                ->count();
+
+            $hasActiveSubscription = $successfulPaymentsCount >= $totalJobsCount;
+
             $activePackage = CompanySubscriptionPackage::query()
                 ->where('is_active', true)
                 ->orderByDesc('sort_order')
@@ -85,12 +97,13 @@ class CompanySubscriptionController extends Controller
                 ->first();
 
             $packageId = $activePackage?->id;
-            $monthlyPriceInr = (int) ($activePackage?->monthly_price_inr ?? 399);
+            $monthlyPriceInr = (int) ($activePackage?->monthly_price_inr ?? 499);
             $packageTitle = (string) ($activePackage?->title ?? 'Company Subscription');
 
             if ($packageId === null) {
                 return $this->ok([
                     'verified' => $verified,
+                    'has_active_subscription' => false,
                     'package_title' => $packageTitle,
                     'monthly_price_inr' => $monthlyPriceInr,
                     'first_month' => [
@@ -153,6 +166,7 @@ class CompanySubscriptionController extends Controller
         if (! $verified) {
             return $this->ok([
                 'verified' => false,
+                'has_active_subscription' => $hasActiveSubscription,
                 'package_title' => $packageTitle,
                 'monthly_price_inr' => $monthlyPriceInr,
                 'first_month' => [
@@ -171,6 +185,7 @@ class CompanySubscriptionController extends Controller
         if ($alreadyPurchasedFirstMonth) {
             return $this->ok([
                 'verified' => true,
+                'has_active_subscription' => $hasActiveSubscription,
                 'package_title' => $packageTitle,
                 'monthly_price_inr' => $monthlyPriceInr,
                 'first_month' => [
@@ -189,6 +204,7 @@ class CompanySubscriptionController extends Controller
         if ($eligibleFreeCoupons->isEmpty()) {
             return $this->ok([
                 'verified' => true,
+                'has_active_subscription' => $hasActiveSubscription,
                 'package_title' => $packageTitle,
                 'monthly_price_inr' => $monthlyPriceInr,
                 'first_month' => [
@@ -208,6 +224,7 @@ class CompanySubscriptionController extends Controller
 
             return $this->ok([
             'verified' => true,
+            'has_active_subscription' => $hasActiveSubscription,
             'package_title' => $packageTitle,
             'monthly_price_inr' => $monthlyPriceInr,
             'first_month' => [
@@ -228,18 +245,10 @@ class CompanySubscriptionController extends Controller
 
     public function purchase(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'coupon_code' => ['nullable', 'string', 'max:64'],
-        ]);
-
         $company = $request->user()->company;
 
         if (! $company) {
             return $this->fail('Company profile not found.', null, 404);
-        }
-
-        if (! $company->isVerified()) {
-            return $this->fail('Company is not verified yet.', null, 403);
         }
 
         $activePackage = CompanySubscriptionPackage::query()
@@ -250,7 +259,7 @@ class CompanySubscriptionController extends Controller
 
         $packageId = $activePackage?->id;
         $packageTitle = (string) ($activePackage?->title ?? 'Company Subscription');
-        $monthlyPriceInr = (int) ($activePackage?->monthly_price_inr ?? 399);
+        $monthlyPriceInr = (int) ($activePackage?->monthly_price_inr ?? 499);
 
         $nextCycle = (int) (CompanySubscriptionPayment::query()
             ->when($packageId !== null, fn ($q) => $q
@@ -262,82 +271,119 @@ class CompanySubscriptionController extends Controller
             ->where('company_id', $company->id)
             ->max('cycle_number') ?? 0) + 1;
 
-        $couponCode = $validated['coupon_code'] ?? null;
-        $couponCodeUsed = $couponCode !== null && trim($couponCode) !== '' ? trim($couponCode) : null;
+        try {
+            $api = app(Api::class);
+            
+            // Monthly Price + 18% GST (1 INR = 100 paise)
+            $amountInPaise = (int) round($monthlyPriceInr * 1.18 * 100);
 
-        $appliedCoupon = null;
-        $isFree = false;
-        $amount = $monthlyPriceInr;
+            // Create order in Razorpay
+            $razorpayOrder = $api->order->create([
+                'receipt' => 'sub_' . $company->id . '_' . time(),
+                'amount' => $amountInPaise,
+                'currency' => 'INR',
+                'notes' => [
+                    'company_id' => $company->id,
+                    'package_id' => $packageId,
+                    'package_title' => $packageTitle,
+                ]
+            ]);
 
-        if ($nextCycle === 1) {
-            // First month free is applied ONLY when admin-targeted coupon_code is provided.
-            if ($couponCode) {
-                $coupon = CompanyCoupon::query()
-                    ->where('is_active', true)
-                    ->when($packageId !== null, fn ($q) => $q
-                        ->where(function ($qq) use ($packageId): void {
-                            $qq->where('company_subscription_package_id', $packageId)
-                                ->orWhereNull('company_subscription_package_id');
-                        })
-                    )
-                    ->whereRaw('lower(code) = ?', [mb_strtolower(trim($couponCode))])
-                    ->first();
+            $orderId = $razorpayOrder['id'];
 
-                if ($coupon
-                    && (bool) $coupon->free_first_month
-                    && $this->matchCouponToCompany($coupon, $company)
-                ) {
-                    $appliedCoupon = $coupon;
-                    $isFree = true;
-                    $amount = 0;
-                }
-            }
-        } else {
-            // Renewal: coupon applies % discount on ₹399 if it matches state/district.
-            if ($couponCode) {
-                $coupon = CompanyCoupon::query()
-                    ->where('is_active', true)
-                    ->when($packageId !== null, fn ($q) => $q
-                        ->where(function ($qq) use ($packageId): void {
-                            $qq->where('company_subscription_package_id', $packageId)
-                                ->orWhereNull('company_subscription_package_id');
-                        })
-                    )
-                    ->whereRaw('lower(code) = ?', [mb_strtolower(trim($couponCode))])
-                    ->first();
+            // Log the purchase as pending
+            $payment = CompanySubscriptionPayment::create([
+                'company_id' => $company->id,
+                'company_subscription_package_id' => $packageId,
+                'cycle_number' => $nextCycle,
+                'coupon_code_used' => null,
+                'amount_inr' => (int) round($monthlyPriceInr * 1.18),
+                'is_free' => false,
+                'payment_status' => 'pending',
+                'razorpay_order_id' => $orderId,
+                'purchased_at' => null,
+            ]);
 
-                if ($coupon
-                    && $this->matchCouponToCompany($coupon, $company)
-                    && (int) $coupon->discount_percent > 0
-                ) {
-                    $appliedCoupon = $coupon;
-                    $discount = (int) $coupon->discount_percent;
-                    $amount = (int) round($monthlyPriceInr * (1 - ($discount / 100)));
-                    if ($amount < 0) $amount = 0;
-                }
-            }
+            return $this->ok([
+                'order_id' => $orderId,
+                'amount' => $amountInPaise,
+                'currency' => 'INR',
+                'package_title' => $packageTitle,
+                'key_id' => config('services.razorpay.key_id'),
+            ], 'Razorpay order created successfully.');
+
+        } catch (\Exception $e) {
+            return $this->fail('Razorpay order creation failed: ' . $e->getMessage(), null, 500);
+        }
+    }
+
+    public function verifySignature(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'razorpay_order_id' => ['required', 'string'],
+            'razorpay_payment_id' => ['required', 'string'],
+            'razorpay_signature' => ['required', 'string'],
+        ]);
+
+        $company = $request->user()->company;
+        if (! $company) {
+            return $this->fail('Company profile not found.', null, 404);
         }
 
-        // Persist payment record; month #1 = cycle_number 1
-        $payment = CompanySubscriptionPayment::create([
-            'company_id' => $company->id,
-            'company_subscription_package_id' => $packageId,
-            'cycle_number' => $nextCycle,
-            'coupon_code_used' => $couponCodeUsed,
-            'amount_inr' => $amount,
-            'is_free' => $isFree,
-            'purchased_at' => Carbon::now(),
-        ]);
+        $payment = CompanySubscriptionPayment::query()
+            ->where('razorpay_order_id', $validated['razorpay_order_id'])
+            ->where('company_id', $company->id)
+            ->first();
 
-        return $this->ok([
-            'package_title' => $packageTitle,
-            'cycle_number' => $payment->cycle_number,
-            'is_free' => $payment->is_free,
-            'amount_inr' => (int) $payment->amount_inr,
-            'applied_coupon_code' => $appliedCoupon?->code,
-            'purchased_at' => $payment->purchased_at?->toISOString(),
-            'message' => $isFree ? '1st month activated for free.' : 'Subscription month purchased successfully.',
-        ]);
+        if (!$payment) {
+            return $this->fail('Order not found.', null, 404);
+        }
+
+        if ($payment->payment_status === 'successful') {
+            return $this->ok(null, 'Payment already verified.');
+        }
+
+        try {
+            $api = app(Api::class);
+
+            // Verify signature
+            $attributes = [
+                'razorpay_order_id' => $validated['razorpay_order_id'],
+                'razorpay_payment_id' => $validated['razorpay_payment_id'],
+                'razorpay_signature' => $validated['razorpay_signature']
+            ];
+
+            $api->utility->verifyPaymentSignature($attributes);
+
+            $payment->update([
+                'payment_status' => 'successful',
+                'razorpay_payment_id' => $validated['razorpay_payment_id'],
+                'razorpay_signature' => $validated['razorpay_signature'],
+                'purchased_at' => now(),
+            ]);
+
+            try {
+                $user = $request->user();
+                if ($user->email && !\App\Support\Identifier::isSyntheticEmail($user->email)) {
+                    \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\CompanySubscriptionSuccessMail($payment));
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('[CompanySubscriptionController] Failed to send email: ' . $e->getMessage());
+            }
+
+            return $this->ok(null, 'Payment verified successfully.');
+
+        } catch (SignatureVerificationError $e) {
+            $payment->update([
+                'payment_status' => 'failed',
+                'razorpay_payment_id' => $validated['razorpay_payment_id'],
+                'razorpay_signature' => $validated['razorpay_signature'],
+            ]);
+
+            return $this->fail('Signature verification failed.', null, 400);
+        } catch (\Exception $e) {
+            return $this->fail('Verification error: ' . $e->getMessage(), null, 500);
+        }
     }
 
     public function history(Request $request): JsonResponse

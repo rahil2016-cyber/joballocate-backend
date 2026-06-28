@@ -96,6 +96,7 @@ Route::prefix('v1')->group(function () {
             Route::put('profile', [CompanyProfileController::class, 'update']);
             Route::get('subscription/offer', [CompanySubscriptionController::class, 'offer']);
             Route::post('subscription/purchase', [CompanySubscriptionController::class, 'purchase']);
+            Route::post('subscription/verify-signature', [CompanySubscriptionController::class, 'verifySignature']);
             Route::get('subscription/history', [CompanySubscriptionController::class, 'history']);
             Route::get('job-posts', [CompanyJobPostController::class, 'index']);
             Route::post('job-posts', [CompanyJobPostController::class, 'store']);

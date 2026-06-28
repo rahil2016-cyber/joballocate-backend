@@ -99,9 +99,25 @@ class SeekerApplicationController extends Controller
                 $job->save();
             }
 
+            $application->load(['user', 'jobPost.company.owner']);
 
+            try {
+                $seeker = $application->user;
+                if ($seeker && $seeker->email && !\App\Support\Identifier::isSyntheticEmail($seeker->email)) {
+                    \Illuminate\Support\Facades\Mail::to($seeker->email)->send(new \App\Mail\JobSeekerApplicationSubmittedMail($application));
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('[SeekerApplicationController] Failed to send seeker email: ' . $e->getMessage());
+            }
 
-            $application->load(['jobPost.company:id,name,slug']);
+            try {
+                $employer = $application->jobPost->company->owner;
+                if ($employer && $employer->email && !\App\Support\Identifier::isSyntheticEmail($employer->email)) {
+                    \Illuminate\Support\Facades\Mail::to($employer->email)->send(new \App\Mail\EmployerJobApplicationNotificationMail($application));
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('[SeekerApplicationController] Failed to send employer email: ' . $e->getMessage());
+            }
 
             return $this->ok($application, 'Application submitted.', null, 201);
         });

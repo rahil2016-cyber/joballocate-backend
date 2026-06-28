@@ -35,15 +35,19 @@ class PublicIndustryTypeController extends Controller
     {
         $rows = IndustryType::query()
             ->where('show_on_seeker_home', true)
+            ->select('industry_types.*')
+            ->selectSub(function ($query) {
+                $query->selectRaw('count(*)')
+                    ->from('job_posts')
+                    ->whereColumn('job_posts.industry_type', 'industry_types.key')
+                    ->where('job_posts.status', \App\Enums\JobPostStatus::Published->value)
+                    ->whereNotNull('job_posts.published_at');
+            }, 'job_posts_count')
+            ->orderByDesc('job_posts_count')
             ->orderBy('seeker_home_sort_order')
             ->orderBy('label')
-            ->get([
-                'key',
-                'label',
-                'seeker_home_icon',
-                'seeker_home_search',
-                'seeker_home_accent_dot',
-            ]);
+            ->get();
+
 
         $data = $rows->map(function (IndustryType $r) {
             $search = $r->seeker_home_search;

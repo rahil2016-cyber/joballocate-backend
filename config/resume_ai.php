@@ -15,7 +15,7 @@ return [
 
     'api_key' => (($k = env('MODEL_KEY')) !== null && trim((string) $k) !== '') ? trim((string) $k) : null,
 
-    'model' => env('OPENROUTER_MODEL', 'arcee-ai/trinity-large-preview:free'),
+    'model' => env('OPENROUTER_MODEL', 'openrouter/free'),
 
     /*
      * Must be: https://openrouter.ai/api/v1/chat/completions
