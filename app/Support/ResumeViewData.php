@@ -180,6 +180,12 @@ final class ResumeViewData
         $projects = self::experienceBlocks($data['projects'] ?? null);
         $work = self::experienceBlocks($data['work_experience'] ?? null);
 
+        if ($internships === [] && is_array($profile?->internships)) {
+            $internships = self::experienceBlocks($profile->internships);
+        }
+        if ($projects === [] && is_array($profile?->projects)) {
+            $projects = self::experienceBlocks($profile->projects);
+        }
         if ($work === [] && is_array($profile?->work_experience)) {
             $work = self::experienceBlocks($profile->work_experience);
         }
@@ -298,9 +304,15 @@ final class ResumeViewData
             if (! is_array($item)) {
                 continue;
             }
-            $heading = self::str($item['company_name'] ?? $item['title'] ?? null);
-            $dates = self::str($item['date_range'] ?? null);
-            $bullets = self::stringList($item['bullets'] ?? null);
+            $heading = self::str($item['company_name'] ?? $item['title'] ?? $item['organization'] ?? null);
+            $dates = self::str($item['date_range'] ?? $item['duration'] ?? $item['link'] ?? null);
+            $bullets = isset($item['bullets']) ? self::stringList($item['bullets']) : [];
+            if ($bullets === []) {
+                $desc = self::str($item['description'] ?? null);
+                if ($desc !== '') {
+                    $bullets = array_filter(array_map('trim', explode("\n", $desc)));
+                }
+            }
             $body = implode("\n", $bullets);
             if (! ResumeHtmlFormat::experienceBlockVisible($heading, $dates, $body)) {
                 continue;
