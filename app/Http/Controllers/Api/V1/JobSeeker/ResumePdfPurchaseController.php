@@ -63,7 +63,7 @@ class ResumePdfPurchaseController extends Controller
                 'resume_template_id' => $row->resume_template_id,
                 'resume_template_title' => $row->resume_template_title,
             ],
-            '₹'.self::PRICE_INR.' (demo) — PDF export unlocked for this download.'
+            'PDF export unlocked successfully.'
         );
     }
 }
