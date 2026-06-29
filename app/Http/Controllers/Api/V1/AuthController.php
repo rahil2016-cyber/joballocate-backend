@@ -401,10 +401,6 @@ class AuthController extends Controller
             return $this->fail('Unauthorized.', null, 401);
         }
 
-        if ($user->role !== UserRole::SuperAdmin->value) {
-            return $this->fail('Only super admin can change password here.', null, 403);
-        }
-
         $validated = $request->validate([
             'current_password' => ['required', 'string', 'max:190'],
             'new_password' => ['required', 'string', 'min:8', 'max:190', 'confirmed'],
